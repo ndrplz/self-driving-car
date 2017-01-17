@@ -26,7 +26,7 @@ def split_train_val(csv_driving_data):
 
     train_data, val_data = train_test_split(driving_data, test_size=0.2, random_state=1)
 
-    return np.array(train_data), np.array(val_data)
+    return train_data, val_data
 
 
 def preprocess(frame_bgr, verbose=False):
@@ -59,60 +59,66 @@ def load_data_batch(data, batchsize=CONFIG['batchsize'], data_dir='data', normal
     h, w, c = CONFIG['input_height'], CONFIG['input_width'], CONFIG['input_channels']
 
     # prepare output structures
-    X_all = np.zeros(shape=(3, batchsize, h, w, c), dtype=np.float32)
+    X = np.zeros(shape=(batchsize, h, w, c), dtype=np.float32)
     y_steer = np.zeros(shape=(batchsize,), dtype=np.float32)
     y_throttle = np.zeros(shape=(batchsize,), dtype=np.float32)
 
-    # select a random batch
-    indexes = np.random.randint(low=0, high=data.shape[0], size=batchsize)
+    # shuffle data
+    shuffled_data = shuffle(data)
 
-    for i, (ct_path, lt_path, rt_path, steer, throttle, brake, speed) in enumerate(data[indexes]):
+    for b in range(0, batchsize):
 
-        # load and preprocess images
-        X_all[0, i] = preprocess(cv2.imread(join(data_dir, ct_path.strip())))
-        X_all[1, i] = preprocess(cv2.imread(join(data_dir, lt_path.strip())))
-        X_all[2, i] = preprocess(cv2.imread(join(data_dir, rt_path.strip())))
+        ct_path, lt_path, rt_path, steer, throttle, brake, speed = shuffled_data.pop()
 
-        y_steer[i] = steer
-        y_throttle[i] = throttle
+        # cast strings to float32
+        steer = np.float32(steer)
+        throttle = np.float32(throttle)
 
-    # for each element in the batch, randomly pick one of the three cameras
-    # in case the chosen camera is not the central, adjust y_steer accordingly
-    delta_correction = CONFIG['delta_correction']
-    X = np.zeros(shape=(batchsize, h, w, c), dtype=np.float32)
-    for i in range(batchsize):
-        camera = random.choice([0, 1, 2])
-        X[i] = X_all[camera, i]
-        if camera == 1:    # left camera
-            y_steer[i] += delta_correction
-        elif camera == 2:  # right camera
-            y_steer[i] -= delta_correction
-        else:              # central camera
+        # randomly choose which camera to use among (central, left, right)
+        # in case the chosen camera is not the frontal one, adjust steer accordingly
+        delta_correction = CONFIG['delta_correction']
+        camera = random.choice(['frontal', 'left', 'right'])
+        if camera == 'frontal':
+            frame = preprocess(cv2.imread(join(data_dir, ct_path.strip())))
+            steer = steer
+        elif camera == 'left':
+            frame = preprocess(cv2.imread(join(data_dir, lt_path.strip())))
+            steer = steer + delta_correction
+        elif camera == 'right':
+            frame = preprocess(cv2.imread(join(data_dir, rt_path.strip())))
+            steer = steer - delta_correction
+
+        if augment_data:
+
+            # mirror images with chance=0.5
+            if random.choice([True, False]):
+                frame = frame[:, ::-1, :]
+                steer *= -1.
+
+            # perturb slightly steering direction
+            steer += np.random.normal(loc=0, scale=CONFIG['augmentation_steer_sigma'])
+
+            # if color images, randomly change brightness
+            if CONFIG['input_channels'] == 3:
+                # cv2.imshow('pre', np.uint8(cv2.resize(frame, (300, 150))))
+                frame = cv2.cvtColor(frame, code=cv2.COLOR_BGR2HSV)
+                frame[:, :, 2] *= random.uniform(CONFIG['augmentation_value_min'], CONFIG['augmentation_value_max'])
+                frame[:, :, 2] = np.clip(frame[:, :, 2], a_min=0, a_max=255)
+                frame = cv2.cvtColor(frame, code=cv2.COLOR_HSV2BGR)
+                # cv2.imshow('post', np.uint8(cv2.resize(frame, (300, 150))))
+                # cv2.waitKey()
+
+        if True:
+            # todo check that batch element meets conditions
             pass
+        else:
+            b -= 1
 
-    if augment_data:
-
-        # mirror images with chance=0.5
-        if random.choice([True, False]):
-            X = X[:, :, ::-1, :]
-            y_steer *= -1
-
-        # perturb slightly steering direction
-        for i in range(y_steer.shape[0]):
-            y_steer[i] += np.random.normal(loc=0, scale=CONFIG['augmentation_steer_sigma'])
-
-        # if color images, randomly change brightness
-        for i in range(X.shape[0]): # todo check that this changes X
-            # cv2.imshow('pre', np.uint8(cv2.resize(frame, (300, 150))))
-            X[i] = cv2.cvtColor(X[i], code=cv2.COLOR_BGR2HSV)
-            X[i][:, :, 2] *= random.uniform(CONFIG['augmentation_value_min'], CONFIG['augmentation_value_max'])
-            X[i][:, :, 2] = np.clip(X[i][:, :, 2], a_min=0, a_max=255)
-            X[i] = cv2.cvtColor(X[i], code=cv2.COLOR_HSV2BGR)
-            # cv2.imshow('post', np.uint8(cv2.resize(frame, (300, 150))))
-            # cv2.waitKey()
+        X[b] = frame
+        y_steer[b] = steer
 
     if normalize:
-        # standardize features
+        # standardize features for whole batch
         X = (X - np.mean(X)) / np.std(X)
 
     if K.backend() == 'theano':
@@ -122,66 +128,72 @@ def load_data_batch(data, batchsize=CONFIG['batchsize'], data_dir='data', normal
 
 
 def generate_data_batch(data, batchsize=CONFIG['batchsize'], data_dir='data', normalize=True, augment_data=True):
-
     # set training images resized shape
     h, w, c = CONFIG['input_height'], CONFIG['input_width'], CONFIG['input_channels']
 
+    # prepare output structures
+    X = np.zeros(shape=(batchsize, h, w, c), dtype=np.float32)
+    y_steer = np.zeros(shape=(batchsize,), dtype=np.float32)
+    y_throttle = np.zeros(shape=(batchsize,), dtype=np.float32)
+
     while True:
-        # prepare output structures
-        X_all = np.zeros(shape=(3, batchsize, h, w, c), dtype=np.float32)
-        y_steer = np.zeros(shape=(batchsize,), dtype=np.float32)
-        y_throttle = np.zeros(shape=(batchsize,), dtype=np.float32)
 
-        # select a random batch
-        indexes = np.random.randint(low=0, high=data.shape[0], size=batchsize)
+        # shuffle data
+        shuffled_data = shuffle(data)
 
-        for i, (ct_path, lt_path, rt_path, steer, throttle, brake, speed) in enumerate(data[indexes]):
+        for b in range(0, batchsize):
 
-            # load and preprocess images
-            X_all[0, i] = preprocess(cv2.imread(join(data_dir, ct_path.strip())))
-            X_all[1, i] = preprocess(cv2.imread(join(data_dir, lt_path.strip())))
-            X_all[2, i] = preprocess(cv2.imread(join(data_dir, rt_path.strip())))
+            ct_path, lt_path, rt_path, steer, throttle, brake, speed = shuffled_data.pop()
 
-            y_steer[i] = steer
-            y_throttle[i] = throttle
+            # cast strings to float32
+            steer = np.float32(steer)
+            throttle = np.float32(throttle)
 
-        # for each element in the batch, randomly pick one of the three cameras
-        # in case the chosen camera is not the central, adjust y_steer accordingly
-        delta_correction = CONFIG['delta_correction']
-        X = np.zeros(shape=(batchsize, h, w, c), dtype=np.float32)
-        for i in range(batchsize):
-            camera = random.choice([0, 1, 2])
-            X[i] = X_all[camera, i]
-            if camera == 1:    # left camera
-                y_steer[i] += delta_correction
-            elif camera == 2:  # right camera
-                y_steer[i] -= delta_correction
-            else:              # central camera
+            # randomly choose which camera to use among (central, left, right)
+            # in case the chosen camera is not the frontal one, adjust steer accordingly
+            delta_correction = CONFIG['delta_correction']
+            camera = random.choice(['frontal', 'left', 'right'])
+            if camera == 'frontal':
+                frame = preprocess(cv2.imread(join(data_dir, ct_path.strip())))
+                steer = steer
+            elif camera == 'left':
+                frame = preprocess(cv2.imread(join(data_dir, lt_path.strip())))
+                steer = steer + delta_correction
+            elif camera == 'right':
+                frame = preprocess(cv2.imread(join(data_dir, rt_path.strip())))
+                steer = steer - delta_correction
+
+            if augment_data:
+
+                # mirror images with chance=0.5
+                if random.choice([True, False]):
+                    frame = frame[:, ::-1, :]
+                    steer *= -1.
+
+                # perturb slightly steering direction
+                steer += np.random.normal(loc=0, scale=CONFIG['augmentation_steer_sigma'])
+
+                # if color images, randomly change brightness
+                if CONFIG['input_channels'] == 3:
+                    # cv2.imshow('pre', np.uint8(cv2.resize(frame, (300, 150))))
+                    frame = cv2.cvtColor(frame, code=cv2.COLOR_BGR2HSV)
+                    frame[:, :, 2] *= random.uniform(CONFIG['augmentation_value_min'], CONFIG['augmentation_value_max'])
+                    frame[:, :, 2] = np.clip(frame[:, :, 2], a_min=0, a_max=255)
+                    frame = cv2.cvtColor(frame, code=cv2.COLOR_HSV2BGR)
+                    # cv2.imshow('post', np.uint8(cv2.resize(frame, (300, 150))))
+                    # cv2.waitKey()
+
+            if True:
+                # todo check that batch element meets conditions
                 pass
+            else:
+                b -= 1
 
-        if augment_data:
-
-            # mirror images with chance=0.5
-            if random.choice([True, False]):
-                X = X[:, :, ::-1, :]
-                y_steer *= -1
-
-            # perturb slightly steering direction
-            for i in range(y_steer.shape[0]):
-                y_steer[i] += np.random.normal(loc=0, scale=CONFIG['augmentation_steer_sigma'])
-
-            # if color images, randomly change brightness
-            for i in range(X.shape[0]):
-                # cv2.imshow('pre', np.uint8(cv2.resize(frame, (300, 150))))
-                X[i] = cv2.cvtColor(X[i], code=cv2.COLOR_BGR2HSV)
-                X[i][:, :, 2] *= random.uniform(CONFIG['augmentation_value_min'], CONFIG['augmentation_value_max'])
-                X[i][:, :, 2] = np.clip(X[i][:, :, 2], a_min=0, a_max=255)
-                X[i] = cv2.cvtColor(X[i], code=cv2.COLOR_HSV2BGR)
-                # cv2.imshow('post', np.uint8(cv2.resize(frame, (300, 150))))
-                # cv2.waitKey()
+            X[b] = frame
+            y_steer[b] = steer
 
         if normalize:
-            # standardize features
+            # standardize features for whole batch
             X = (X - np.mean(X)) / np.std(X)
 
         if K.backend() == 'theano':

@@ -5,7 +5,7 @@ CONFIG = {
     'input_channels': 3,
     'delta_correction': 0.25,
     'augmentation_steer_sigma': 0.2,
-    'augmentation_value_min': 0.7,
-    'augmentation_value_max': 1.3,
+    'augmentation_value_min': 0.2,
+    'augmentation_value_max': 1.5,
     'crop_height': range(20, 140)
 }
