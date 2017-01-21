@@ -200,16 +200,5 @@ if __name__ == '__main__':
 
     train_data, val_data = split_train_val(csv_driving_data='data/driving_log.csv')
 
-    # show ground truth distribution for different values of bias
-    biases = np.linspace(start=0., stop=1., num=5)
-    fig, axarray = plt.subplots(len(biases))
-    for i, ax in enumerate(axarray.ravel()):
-        b = biases[i]
-        x_batch, y_batch = load_data_batch(train_data, batchsize=1024, normalize=True, augment_data=True, bias=b)
-        ax.hist(y_batch, 50, normed=1, facecolor='green', alpha=0.75)
-        ax.set_title('Bias: {:02f}'.format(b))
-        ax.axis([-1., 1., 0., 2.])
-    plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
-    plt.show()
-    plt.waitforbuttonpress()
-    pass
+
+

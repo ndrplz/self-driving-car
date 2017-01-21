@@ -6,7 +6,7 @@ from sklearn.utils import shuffle
 from keras.optimizers import Adam
 from keras.models import Model
 from keras.layers import Input, Convolution2D, MaxPooling2D, Flatten, Dense, Dropout, ELU, Lambda
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, CSVLogger
 import matplotlib.pyplot as plt
 import random
 import keras.backend as K
@@ -76,10 +76,11 @@ if __name__ == '__main__':
         f.write(nvidia_net.to_json())
 
     checkpointer = ModelCheckpoint('checkpoints/weights.{epoch:02d}-{val_loss:.3f}.hdf5')
+    logger = CSVLogger(filename='logs/history.csv')
 
     nvidia_net.fit_generator(generator=generate_data_batch(train_data, augment_data=True, bias=CONFIG['bias']),
                          samples_per_epoch=300*CONFIG['batchsize'],
                          nb_epoch=50,
                          validation_data=generate_data_batch(val_data, augment_data=False),
                          nb_val_samples=100*CONFIG['batchsize'],
-                         callbacks=[checkpointer])
+                         callbacks=[checkpointer, logger])
