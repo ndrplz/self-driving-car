@@ -14,7 +14,7 @@ from io import BytesIO
 import os
 import numpy as np
 from config import *
-from model import preprocess
+from load_data import preprocess
 from keras.models import model_from_json
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array
 
@@ -54,7 +54,7 @@ def telemetry(sid, data):
     steering_angle = float(model.predict(transformed_image_array, batch_size=1))
 
     # The driving model currently just outputs a constant throttle. Feel free to edit this.
-    throttle = 0.2
+    throttle = 0.3
     print(steering_angle, throttle)
     send_control(steering_angle, throttle)
 
@@ -84,6 +84,7 @@ if __name__ == '__main__':
     # load model weights
     weights_path = os.path.join('checkpoints', os.listdir('checkpoints')[-1])
     print('Loading weights: {}'.format(weights_path))
+    weights_path = os.path.join('checkpoints', 'old', os.listdir('checkpoints/old')[-1])
     model.load_weights(weights_path)
 
     # compile the model
