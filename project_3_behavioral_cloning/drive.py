@@ -45,7 +45,7 @@ def telemetry(sid, data):
     image_array = cv2.cvtColor(np.asarray(image), code=cv2.COLOR_RGB2BGR)
 
     # perform preprocessing (crop, resize etc.)
-    image_array = preprocess(image_array)
+    image_array = preprocess(frame_bgr=image_array)
 
     # add singleton batch dimension
     image_array = np.expand_dims(image_array, axis=0)

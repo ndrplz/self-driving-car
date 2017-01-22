@@ -1,14 +1,7 @@
-from os.path import join
-import cv2
-import numpy as np
-import csv
-from sklearn.utils import shuffle
 from keras.optimizers import Adam
 from keras.models import Model
-from keras.layers import Input, Convolution2D, MaxPooling2D, Flatten, Dense, Dropout, ELU, Lambda
+from keras.layers import Input, Convolution2D, Flatten, Dense, Dropout, ELU, Lambda
 from keras.callbacks import ModelCheckpoint, CSVLogger
-import matplotlib.pyplot as plt
-import random
 import keras.backend as K
 from config import *
 from load_data import load_data_batch, generate_data_batch, split_train_val
@@ -16,7 +9,7 @@ from load_data import load_data_batch, generate_data_batch, split_train_val
 
 def get_nvidia_model(summary=True):
 
-    init = 'he_normal'
+    init = 'glorot_uniform'
 
     if K.backend() == 'theano':
         input_frame = Input(shape=(CONFIG['input_channels'], NVIDIA_H, NVIDIA_W))

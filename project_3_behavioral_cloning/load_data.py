@@ -40,9 +40,6 @@ def preprocess(frame_bgr, verbose=False):
     if CONFIG['input_channels'] == 1:
         frame_resized = np.expand_dims(cv2.cvtColor(frame_resized, cv2.COLOR_BGR2YUV)[:, :, 0], 2)
 
-    elif CONFIG['convert2YUV']:
-        frame_resized = cv2.cvtColor(frame_resized, cv2.COLOR_BGR2YUV)
-
     if verbose:
         plt.figure(1), plt.imshow(cv2.cvtColor(frame_bgr, code=cv2.COLOR_BGR2RGB))
         plt.figure(2), plt.imshow(cv2.cvtColor(frame_cropped, code=cv2.COLOR_BGR2RGB))
@@ -100,14 +97,10 @@ def load_data_batch(data, batchsize=CONFIG['batchsize'], data_dir='data', augmen
 
             # if color images, randomly change brightness
             if CONFIG['input_channels'] == 3:
-                if CONFIG['convert2YUV']:
-                    frame = cv2.cvtColor(frame, cv2.COLOR_YUV2BGR)
                 frame = cv2.cvtColor(frame, code=cv2.COLOR_BGR2HSV)
                 frame[:, :, 2] *= random.uniform(CONFIG['augmentation_value_min'], CONFIG['augmentation_value_max'])
                 frame[:, :, 2] = np.clip(frame[:, :, 2], a_min=0, a_max=255)
                 frame = cv2.cvtColor(frame, code=cv2.COLOR_HSV2BGR)
-                if CONFIG['convert2YUV']:
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)
 
         # check that each element in the batch meet the condition
         steer_magnitude_thresh = np.random.rand()
@@ -173,14 +166,10 @@ def generate_data_batch(data, batchsize=CONFIG['batchsize'], data_dir='data', au
 
                 # if color images, randomly change brightness
                 if CONFIG['input_channels'] == 3:
-                    if CONFIG['convert2YUV']:
-                        frame = cv2.cvtColor(frame, cv2.COLOR_YUV2BGR)
                     frame = cv2.cvtColor(frame, code=cv2.COLOR_BGR2HSV)
                     frame[:, :, 2] *= random.uniform(CONFIG['augmentation_value_min'], CONFIG['augmentation_value_max'])
                     frame[:, :, 2] = np.clip(frame[:, :, 2], a_min=0, a_max=255)
                     frame = cv2.cvtColor(frame, code=cv2.COLOR_HSV2BGR)
-                    if CONFIG['convert2YUV']:
-                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)
 
             # check that each element in the batch meet the condition
             steer_magnitude_thresh = np.random.rand()

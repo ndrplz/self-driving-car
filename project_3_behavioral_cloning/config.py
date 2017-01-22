@@ -1,10 +1,9 @@
 NVIDIA_H, NVIDIA_W = 66, 200
 
 CONFIG = {
-    'batchsize': 256,
+    'batchsize': 512,
     'input_width': NVIDIA_W,
     'input_height': NVIDIA_H,
-    'convert2YUV': True,
     'input_channels': 3,
     'delta_correction': 0.25,
     'augmentation_steer_sigma': 0.2,
