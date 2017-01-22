@@ -40,21 +40,21 @@ def telemetry(sid, data):
     # The current image from the center camera of the car
     imgString = data["image"]
     image = Image.open(BytesIO(base64.b64decode(imgString)))
-    image_array = np.asarray(image) # frames incoming from the simulator are in RGB format
+
+    # frames incoming from the simulator are in RGB format
+    image_array = cv2.cvtColor(np.asarray(image), code=cv2.COLOR_RGB2BGR)
 
     # perform preprocessing (crop, resize etc.)
-    image_array = preprocess(frame_bgr=cv2.cvtColor(image_array, code=cv2.COLOR_RGB2BGR))
-    # plt.imshow(image_array), plt.show()
+    image_array = preprocess(image_array)
 
-    # standardization
-    image_array = (image_array - np.mean(image_array)) / np.std(image_array)
+    # add singleton batch dimension
+    image_array = np.expand_dims(image_array, axis=0)
 
-    transformed_image_array = image_array[None, :, :, :]
     # This model currently assumes that the features of the model are just the images. Feel free to change this.
-    steering_angle = float(model.predict(transformed_image_array, batch_size=1))
+    steering_angle = float(model.predict(image_array, batch_size=1))
 
     # The driving model currently just outputs a constant throttle. Feel free to edit this.
-    throttle = 0.3
+    throttle = 0.25
     print(steering_angle, throttle)
     send_control(steering_angle, throttle)
 
@@ -76,16 +76,20 @@ if __name__ == '__main__':
 
     from keras.models import model_from_json
 
+    json_path = 'logs/model.json'
+
     # load model from json
     json_path ='logs/model.json'
     with open(json_path) as jfile:
         model = model_from_json(jfile.read())
 
-    # load model weights
-    weights_path = os.path.join('checkpoints', os.listdir('checkpoints')[-1])
-    print('Loading weights: {}'.format(weights_path))
-    weights_path = os.path.join('checkpoints', 'old', os.listdir('checkpoints/old')[-1])
-    model.load_weights(weights_path)
+    model = model_from_json(open('checkpoints/old_no_bias/model.json').read())
+    model.load_weights('checkpoints/old_no_bias/weights.hdf5')
+
+    # # load model weights
+    # weights_path = os.path.join('checkpoints', os.listdir('checkpoints')[-1])
+    # print('Loading weights: {}'.format(weights_path))
+    # model.load_weights(weights_path)
 
     # compile the model
     model.compile("adam", "mse")

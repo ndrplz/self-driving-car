@@ -16,6 +16,8 @@ from load_data import load_data_batch, generate_data_batch, split_train_val
 
 def get_nvidia_model(summary=True):
 
+    init = 'he_normal'
+
     if K.backend() == 'theano':
         input_frame = Input(shape=(CONFIG['input_channels'], NVIDIA_H, NVIDIA_W))
     else:
@@ -24,33 +26,33 @@ def get_nvidia_model(summary=True):
     # input normalization
     x = Lambda(lambda z: z / 127.5 - 1.)(input_frame)
 
-    x = Convolution2D(24, 5, 5, border_mode='valid', subsample=(2, 2))(x)
+    x = Convolution2D(24, 5, 5, border_mode='valid', subsample=(2, 2), init=init)(x)
     x = ELU()(x)
     x = Dropout(0.2)(x)
-    x = Convolution2D(36, 5, 5, border_mode='valid', subsample=(2, 2))(x)
+    x = Convolution2D(36, 5, 5, border_mode='valid', subsample=(2, 2), init=init)(x)
     x = ELU()(x)
     x = Dropout(0.2)(x)
-    x = Convolution2D(48, 5, 5, border_mode='valid', subsample=(2, 2))(x)
+    x = Convolution2D(48, 5, 5, border_mode='valid', subsample=(2, 2), init=init)(x)
     x = ELU()(x)
     x = Dropout(0.2)(x)
-    x = Convolution2D(64, 3, 3, border_mode='valid')(x)
+    x = Convolution2D(64, 3, 3, border_mode='valid', init=init)(x)
     x = ELU()(x)
     x = Dropout(0.2)(x)
-    x = Convolution2D(64, 3, 3, border_mode='valid')(x)
+    x = Convolution2D(64, 3, 3, border_mode='valid', init=init)(x)
     x = ELU()(x)
     x = Dropout(0.2)(x)
 
     x = Flatten()(x)
 
-    x = Dense(100)(x)
+    x = Dense(100, init=init)(x)
     x = ELU()(x)
     x = Dropout(0.5)(x)
-    x = Dense(50)(x)
+    x = Dense(50, init=init)(x)
     x = ELU()(x)
     x = Dropout(0.5)(x)
-    x = Dense(10)(x)
+    x = Dense(10, init=init)(x)
     x = ELU()(x)
-    out = Dense(1)(x)
+    out = Dense(1, init=init)(x)
 
     model = Model(input=input_frame, output=out)
 
@@ -81,6 +83,6 @@ if __name__ == '__main__':
     nvidia_net.fit_generator(generator=generate_data_batch(train_data, augment_data=True, bias=CONFIG['bias']),
                          samples_per_epoch=300*CONFIG['batchsize'],
                          nb_epoch=50,
-                         validation_data=generate_data_batch(val_data, augment_data=False),
+                         validation_data=generate_data_batch(val_data, augment_data=False, bias=1.0),
                          nb_val_samples=100*CONFIG['batchsize'],
                          callbacks=[checkpointer, logger])

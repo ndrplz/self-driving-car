@@ -10,7 +10,7 @@ CONFIG = {
     'augmentation_steer_sigma': 0.2,
     'augmentation_value_min': 0.2,
     'augmentation_value_max': 1.5,
-    'bias': 0.7,
+    'bias': 0.8,
     'crop_height': range(20, 140)
 }
 

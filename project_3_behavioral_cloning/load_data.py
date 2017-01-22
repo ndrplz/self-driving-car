@@ -39,6 +39,7 @@ def preprocess(frame_bgr, verbose=False):
     # eventually change color space
     if CONFIG['input_channels'] == 1:
         frame_resized = np.expand_dims(cv2.cvtColor(frame_resized, cv2.COLOR_BGR2YUV)[:, :, 0], 2)
+
     elif CONFIG['convert2YUV']:
         frame_resized = cv2.cvtColor(frame_resized, cv2.COLOR_BGR2YUV)
 
