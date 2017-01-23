@@ -28,14 +28,23 @@ def normalize_in_0_255(tensor):
 if __name__ == '__main__':
 
     # directory in which activations are saved
-    conv1_out_dir = 'activations_conv1'
-    if not os.path.exists(conv1_out_dir):
-        os.makedirs(conv1_out_dir)
-    conv2_out_dir = 'activations_conv2'
-    if not os.path.exists(conv2_out_dir):
-        os.makedirs(conv2_out_dir)
+    elu1_out_dir = 'activations_conv1'
+    if not os.path.exists(elu1_out_dir):
+        os.makedirs(elu1_out_dir)
+    elu2_out_dir = 'activations_conv2'
+    if not os.path.exists(elu2_out_dir):
+        os.makedirs(elu2_out_dir)
+    elu3_out_dir = 'activations_conv3'
+    if not os.path.exists(elu3_out_dir):
+        os.makedirs(elu3_out_dir)
+    elu4_out_dir = 'activations_conv4'
+    if not os.path.exists(elu4_out_dir):
+        os.makedirs(elu4_out_dir)
 
-    train_data, val_data = split_train_val(csv_driving_data='data/driving_log.csv')
+
+    with open('data/driving_log.csv', 'r') as f:
+        reader = csv.reader(f)
+        driving_data = [row for row in reader][1:]
 
     # load model architecture
     json_path = 'logs/model.json'
@@ -46,15 +55,24 @@ if __name__ == '__main__':
     print('Loading weights: {}'.format(weights_path))
     model.load_weights(weights_path)
 
-    first_conv = Model(input=model.layers[0].input, output=model.layers[2].output)
-    first_conv.compile(optimizer='adam', loss='mse')
+    first_ELU = Model(input=model.layers[0].input, output=model.layers[3].output)
+    first_ELU.compile(optimizer='adam', loss='mse')
 
-    second_conv = Model(input=model.layers[0].input, output=model.layers[5].output)
-    second_conv.compile(optimizer='adam', loss='mse')
+    second_ELU = Model(input=model.layers[0].input, output=model.layers[6].output)
+    second_ELU.compile(optimizer='adam', loss='mse')
 
-    for i, data_row in enumerate(train_data):
+    third_ELU = Model(input=model.layers[0].input, output=model.layers[9].output)
+    third_ELU.compile(optimizer='adam', loss='mse')
 
-        print('Frame {:06d} / {:06d}'.format(i, len(train_data)))
+    fourth_ELU = Model(input=model.layers[0].input, output=model.layers[12].output)
+    fourth_ELU.compile(optimizer='adam', loss='mse')
+
+    fifth_ELU = Model(input=model.layers[0].input, output=model.layers[15].output)
+    fifth_ELU.compile(optimizer='adam', loss='mse')
+
+    for i, data_row in enumerate(driving_data):
+
+        print('Frame {:06d} / {:06d}'.format(i, len(driving_data)))
 
         plt.close('all')
 
@@ -73,7 +91,7 @@ if __name__ == '__main__':
         central_frame = central_frame[np.newaxis, :, :, :]
 
         # z = np.random.rand(1, 31, 98, 24)
-        z = first_conv.predict(central_frame)
+        z = first_ELU.predict(central_frame)
         z = normalize_in_0_255(z)
         rows, cols = 3, 8
         for r in range(rows):
@@ -86,7 +104,7 @@ if __name__ == '__main__':
                 ax.imshow(cur_act.astype(np.uint8), cmap='gray')
         plt.tight_layout(pad=0.1, h_pad=-10, w_pad=-1.5)
 
-        filename = join(conv1_out_dir, 'conv1_{:06d}.jpg'.format(i))
+        filename = join(elu1_out_dir, 'conv1_{:06d}.jpg'.format(i))
         plt.savefig(filename, facecolor='black', bbox_inches='tight')
 
 
@@ -107,7 +125,7 @@ if __name__ == '__main__':
         central_frame = central_frame[np.newaxis, :, :, :]
 
         # z = np.random.rand(1, 14, 47, 36)
-        z = second_conv.predict(central_frame)
+        z = second_ELU.predict(central_frame)
         z = normalize_in_0_255(z)
         rows, cols = 4, 9
         for r in range(rows):
@@ -120,8 +138,73 @@ if __name__ == '__main__':
                 ax.imshow(cur_act.astype(np.uint8), cmap='gray')
         plt.tight_layout(pad=0.1, h_pad=-10, w_pad=-1.5)
 
-        filename = join(conv2_out_dir, 'conv2_{:06d}.jpg'.format(i))
+        filename = join(elu2_out_dir, 'conv2_{:06d}.jpg'.format(i))
+        plt.savefig(filename, facecolor='black', bbox_inches='tight')
+
+        # CONV 3 ####################################################
+
+
+        plt.close('all')
+
+        # load current color frame
+        central_frame = cv2.imread(os.path.join('data', data_row[0]), cv2.IMREAD_COLOR)
+
+        gs = gridspec.GridSpec(7, 8)
+        ax = plt.subplot(gs[0, 3:5])
+        ax.set_axis_off()
+        ax.imshow(cv2.cvtColor(central_frame, cv2.COLOR_BGR2RGB))
+
+        # preprocess and add batch dimension
+        central_frame = preprocess(central_frame)
+        central_frame = central_frame[np.newaxis, :, :, :]
+
+        # z = np.random.rand(1, 14, 47, 36)
+        z = third_ELU.predict(central_frame)
+        z = normalize_in_0_255(z)
+        rows, cols = 6, 8
+        for r in range(rows):
+            for c in range(cols):
+                ax = plt.subplot(gs[r + 1, c])
+                idx = r * cols + c
+                cur_act = z[0, :, :, idx]
+                cur_act = cv2.resize(cur_act, (NVIDIA_W, NVIDIA_H))
+                ax.set_axis_off()
+                ax.imshow(cur_act.astype(np.uint8), cmap='gray')
+        plt.tight_layout(pad=0.1, h_pad=-10, w_pad=-1.5)
+
+        filename = join(elu3_out_dir, 'conv3_{:06d}.jpg'.format(i))
         plt.savefig(filename, facecolor='black', bbox_inches='tight')
 
 
+        # ELU 4 ####################################################
 
+        plt.close('all')
+
+        # load current color frame
+        central_frame = cv2.imread(os.path.join('data', data_row[0]), cv2.IMREAD_COLOR)
+
+        gs = gridspec.GridSpec(9, 8)
+        ax = plt.subplot(gs[0, 3:5])
+        ax.set_axis_off()
+        ax.imshow(cv2.cvtColor(central_frame, cv2.COLOR_BGR2RGB))
+
+        # preprocess and add batch dimension
+        central_frame = preprocess(central_frame)
+        central_frame = central_frame[np.newaxis, :, :, :]
+
+        # z = np.random.rand(1, 14, 47, 36)
+        z = fourth_ELU.predict(central_frame)
+        z = normalize_in_0_255(z)
+        rows, cols = 8, 8
+        for r in range(rows):
+            for c in range(cols):
+                ax = plt.subplot(gs[r + 1, c])
+                idx = r * cols + c
+                cur_act = z[0, :, :, idx]
+                cur_act = cv2.resize(cur_act, (NVIDIA_W, NVIDIA_H))
+                ax.set_axis_off()
+                ax.imshow(cur_act.astype(np.uint8), cmap='gray')
+        plt.tight_layout(pad=0.4, h_pad=-2, w_pad=-1.5)
+
+        filename = join(elu4_out_dir, 'conv4_{:06d}.jpg'.format(i))
+        plt.savefig(filename, facecolor='black', bbox_inches='tight')

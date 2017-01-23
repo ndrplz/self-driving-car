@@ -76,20 +76,18 @@ if __name__ == '__main__':
 
     from keras.models import model_from_json
 
-    json_path = 'logs/model.json'
-
     # load model from json
     json_path ='logs/model.json'
     with open(json_path) as jfile:
         model = model_from_json(jfile.read())
 
-    model = model_from_json(open('checkpoints/old_no_bias/model.json').read())
-    model.load_weights('checkpoints/old_no_bias/weights.hdf5')
-
-    # # load model weights
-    # weights_path = os.path.join('checkpoints', os.listdir('checkpoints')[-1])
-    # print('Loading weights: {}'.format(weights_path))
-    # model.load_weights(weights_path)
+    # model = model_from_json(open('checkpoints/old_no_bias/model.json').read())
+    # model.load_weights('checkpoints/old_no_bias/weights.hdf5')
+    #
+    # load model weights
+    weights_path = os.path.join('checkpoints', os.listdir('checkpoints')[-1])
+    print('Loading weights: {}'.format(weights_path))
+    model.load_weights(weights_path)
 
     # compile the model
     model.compile("adam", "mse")
