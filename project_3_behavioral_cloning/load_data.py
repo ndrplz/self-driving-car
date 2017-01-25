@@ -14,19 +14,29 @@ import keras.backend as K
 from config import *
 
 
-def split_train_val(csv_driving_data):
-
+def split_train_val(csv_driving_data, test_size=0.2):
+    """
+    Splits the csv containing driving data into training and validation
+    :param csv_driving_data: file path of Udacity csv driving data
+    :return:
+    """
     with open(csv_driving_data, 'r') as f:
         reader = csv.reader(f)
         driving_data = [row for row in reader][1:]
 
-    train_data, val_data = train_test_split(driving_data, test_size=0.2, random_state=1)
+    train_data, val_data = train_test_split(driving_data, test_size=test_size, random_state=1)
 
     return train_data, val_data
 
 
 def preprocess(frame_bgr, verbose=False):
-
+    """
+    Perform preprocessing steps on a single bgr frame.
+    These inlcude: cropping, resizing, eventually converting to grayscale
+    :param frame_bgr: input color frame in BGR format
+    :param verbose: if true, open debugging visualization
+    :return:
+    """
     # set training images resized shape
     h, w = CONFIG['input_height'], CONFIG['input_width']
 
