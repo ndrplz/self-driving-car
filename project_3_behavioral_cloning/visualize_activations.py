@@ -28,16 +28,16 @@ def normalize_in_0_255(tensor):
 if __name__ == '__main__':
 
     # directory in which activations are saved
-    elu1_out_dir = 'activations_conv1'
+    elu1_out_dir = 'activations_conv1_no_train'
     if not os.path.exists(elu1_out_dir):
         os.makedirs(elu1_out_dir)
-    elu2_out_dir = 'activations_conv2'
+    elu2_out_dir = 'activations_conv2_no_train'
     if not os.path.exists(elu2_out_dir):
         os.makedirs(elu2_out_dir)
-    elu3_out_dir = 'activations_conv3'
+    elu3_out_dir = 'activations_conv3_no_train'
     if not os.path.exists(elu3_out_dir):
         os.makedirs(elu3_out_dir)
-    elu4_out_dir = 'activations_conv4'
+    elu4_out_dir = 'activations_conv4_no_train'
     if not os.path.exists(elu4_out_dir):
         os.makedirs(elu4_out_dir)
 
@@ -51,9 +51,9 @@ if __name__ == '__main__':
     model = model_from_json(open(json_path).read())
 
     # load model weights
-    weights_path = os.path.join('checkpoints', os.listdir('checkpoints')[-1])
-    print('Loading weights: {}'.format(weights_path))
-    model.load_weights(weights_path)
+    # weights_path = os.path.join('checkpoints', os.listdir('checkpoints')[-1])
+    # print('Loading weights: {}'.format(weights_path))
+    # model.load_weights(weights_path)
 
     first_ELU = Model(input=model.layers[0].input, output=model.layers[3].output)
     first_ELU.compile(optimizer='adam', loss='mse')
@@ -66,9 +66,6 @@ if __name__ == '__main__':
 
     fourth_ELU = Model(input=model.layers[0].input, output=model.layers[12].output)
     fourth_ELU.compile(optimizer='adam', loss='mse')
-
-    fifth_ELU = Model(input=model.layers[0].input, output=model.layers[15].output)
-    fifth_ELU.compile(optimizer='adam', loss='mse')
 
     for i, data_row in enumerate(driving_data):
 
