@@ -30,5 +30,3 @@ Here's how a typical sample looks like. We have three frames from different came
 
 ## Testing the model
 ### Discussion
-### Video demo
-

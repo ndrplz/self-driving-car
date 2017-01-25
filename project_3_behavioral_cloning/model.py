@@ -24,7 +24,7 @@ def get_nvidia_model(summary=True):
     else:
         input_frame = Input(shape=(NVIDIA_H, NVIDIA_W, CONFIG['input_channels']))
 
-    # input normalization
+    # standardize input
     x = Lambda(lambda z: z / 127.5 - 1.)(input_frame)
 
     x = Convolution2D(24, 5, 5, border_mode='valid', subsample=(2, 2), init=init)(x)
@@ -66,8 +66,6 @@ def get_nvidia_model(summary=True):
 if __name__ == '__main__':
 
     train_data, val_data = split_train_val(csv_driving_data='data/driving_log.csv')
-
-    x_batch, y_batch = load_data_batch(train_data)
 
     nvidia_net = get_nvidia_model(summary=True)
 

@@ -1,3 +1,7 @@
+"""
+Project 3 configuration and hyperparameters
+"""
+
 NVIDIA_H, NVIDIA_W = 66, 200
 
 CONFIG = {
