@@ -8,7 +8,15 @@ from load_data import load_data_batch, generate_data_batch, split_train_val
 
 
 def get_nvidia_model(summary=True):
+    """
+    Get the keras Model corresponding to the NVIDIA architecture described in:
+    Bojarski, Mariusz, et al. "End to end learning for self-driving cars."
 
+    The paper describes the network architecture but doesn't go into details for some aspects.
+    Input normalization, as well as ELU activations are just my personal implementation choice.
+    :param summary: show model summary
+    :return: keras Model of NVIDIA architecture
+    """
     init = 'glorot_uniform'
 
     if K.backend() == 'theano':
