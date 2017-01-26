@@ -19,9 +19,20 @@ Udacity training set is constituted by 8036 samples. For each sample, two main i
 
 Here's how a typical sample looks like. We have three frames from different cameras as well as the associated steering direction.
 
+![training_data_before_preprocessing](img/data_samples_before_preprocessing.png)
 
+preprocessing description
+
+![training_data_after_preprocessing](img/data_samples_after_preprocessing.png)
+
+data skewness
+![data_skewness](img/training_data_distribution.png)
 
 ### Data Augmentation
+
+effect of bias parameter on a generated batch
+
+![augmentation_correct_bias](img/bias_parameter.png)
 
 ## Network architecture
 ### Model architecture
