@@ -31,7 +31,23 @@ As we see, each frame is associated to a certain steering angle. Unfortunately, 
 
 ### Data Augmentation
 
-effect of bias parameter on a generated batch
+Due to the aforementioned data imbalance, it's easy to imagine that every learning algorithm we would train on the raw data would just learn to predict the steering value 0. Furthermore, we can see that the "test" track is completely different from the "training" one form a visually point of view. Thus, a network naively trained on the first track would *hardly* generalize to the second one. Various forms of data augmentation can help us to deal with these problems.
+
+##### Exploting left and right cameras
+
+For each steering angle we have available three frames, captured from the frontal, left and right camera respectively. Frames from the side cameras can thus be employed to augment the training set, by appropriately correcting the ground truth steering angle. This way of augmenting the data is also reported in the [NVIDIA paper](https://arxiv.org/pdf/1604.07316v1.pdf).
+
+##### Brightness changes
+
+Before being fed to the network, each frame is converted to HSV and the Value channel is multiplied element-wise by a random value in a certain range. The wider the range, the more different will be on average the augmented frames from the original ones.  
+
+##### Normal noise on the steering value
+
+Given a certain frame, we have its associated steering direction. However, being steering direction a continuous value, we could argue that the one in the ground truth is not *necessarily* the only working steering direction. Given the same input frame, a slightly different steering value would probably work anyway. For this reason, during the training a light normal distributed noise is added to the ground truth value. In this way we create a little more variety in the data without completely twisting the original value. 
+
+##### Shifting the bias
+
+Finally, we introduced a parameter called $bias \in [0, 1]$ in the `data generator` to be able to mitigate the bias towards zero of the ground truth. Every time an example is loaded from the training set, a *soft* random theshold $r \in [0, 1]$ is computed. Then the example is discarded from the batch if $s_i + bias < r$. In this way, we can tweak the ground truth distribution of the data batches loaded. The effect of the bias parameter on the distribution of the ground truth in a batch of 1024 frames is shown below:
 
 ![augmentation_correct_bias](img/bias_parameter.png)
 
