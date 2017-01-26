@@ -21,11 +21,12 @@ Here's how a typical sample looks like. We have three frames from different came
 
 ![training_data_before_preprocessing](img/data_samples_before_preprocessing.png)
 
-preprocessing description
+First things first, every frame is preprocessed by cropping the upper and lower part of the frame: in this way we discard information that is probably useless for the task of predicting the steering direction. Now our input frames look like these: 
 
 ![training_data_after_preprocessing](img/data_samples_after_preprocessing.png)
 
-data skewness
+As we see, each frame is associated to a certain steering angle. Unfortunately, there's a huge skew in the ground truth data distribution: as we can see the steering angle distribution is strongly biased towards the zero.
+
 ![data_skewness](img/training_data_distribution.png)
 
 ### Data Augmentation
