@@ -47,11 +47,22 @@ Given a certain frame, we have its associated steering direction. However, being
 
 ##### Shifting the bias
 
-Finally, we introduced a parameter called $bias \in [0, 1]$ in the `data generator` to be able to mitigate the bias towards zero of the ground truth. Every time an example is loaded from the training set, a *soft* random theshold $r \in [0, 1]$ is computed. Then the example is discarded from the batch if $s_i + bias < r$. In this way, we can tweak the ground truth distribution of the data batches loaded. The effect of the bias parameter on the distribution of the ground truth in a batch of 1024 frames is shown below:
+Finally, we introduced a parameter called `bias` belonging to range [0, 1] in the `data generator` to be able to mitigate the bias towards zero of the ground truth. Every time an example is loaded from the training set, a *soft* random theshold `r =  np.random.rand()` is computed. Then the example `i` is discarded from the batch if `steering(i) + bias < r`. In this way, we can tweak the ground truth distribution of the data batches loaded. The effect of the bias parameter on the distribution of the ground truth in a batch of 1024 frames is shown below:
 
 ![augmentation_correct_bias](img/bias_parameter.png)
 
 ## Network architecture
+
+Network architecture is borrowed from the aforementioned [NVIDIA paper](https://arxiv.org/pdf/1604.07316v1.pdf) in which they tackle the same problem of steering angle prediction, just in a slightly more unconstrained environment :-)
+
+The architecture is *relatively shallow* and is shown below:
+
+Input normalization is implemented through a `Lambda` layer, which constitutes the first layer of the model. In this way input is standardized such that lie in the range [-1, 1] (of course this works because the frame fed to the network is in range [0, 255]).
+
+The choice of ELU activation function (instead of more traditional ReLU) come from [this](https://github.com/commaai/research/blob/master/train_steering_model.py) model of CommaAI, which is born for the same task of steering regression. On the contrary, the NVIDIA paper does not explicitly state which activation function they use.
+
+Convolutional layers are followed by 3 fully-connected layers: finally, a last single neuron tries to regress the correct steering value from the features it receives from the previous layers.
+
 ### Model architecture
 ### Preventing overfitting
 ### Training Details
