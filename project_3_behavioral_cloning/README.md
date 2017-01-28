@@ -8,7 +8,12 @@ alt="project3" width="240" height="180" border="10" /></a>
 ## Code overview
 
 The code is structured as follows:
-
+- [`config.py`](config.py): project configuration and hyperparameters
+- [`model.py`](model.py): model definition and training
+- [`drive.py`](drive.py): interaction with the simulator (actually drive the car)
+- [`load_data.py`](load_data.py): definition of data generator + handling data augmentation
+- [`visualize_data.py`](visualize_data.py): exploratory visualization of the dataset, used in this readme
+- [`visualize_activations.py`](visualize_activations.py): visualization of the trained network activations, used in the demo video above
 
 ## Goal
 The goal of the project was to train a Deep Network to replicate the human steering behavior while driving, thus being able to drive autonomously on a simulator provided by [Udacity](https://www.udacity.com/). To this purpose, the network takes as input the frame of the frontal camera (say, a roof-mounted camera) and predicts the steering direction at each instant.
