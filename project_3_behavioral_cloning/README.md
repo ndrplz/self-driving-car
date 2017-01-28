@@ -16,6 +16,7 @@ The code is structured as follows:
 - [`load_data.py`](load_data.py): definition of data generator + handling data augmentation
 - [`visualize_data.py`](visualize_data.py): exploratory visualization of the dataset, used in this readme
 - [`visualize_activations.py`](visualize_activations.py): visualization of the trained network activations, used in the demo video above
+- [`pretrained/`](pretrained/): contains pretrained model architecture and weights
 
 ## The dataset
 Data for this task can be gathered with the Udacity simulator itself. Indeed, when the simulator is set to *training mode*, the car is controlled by the human though the keyboard, and frames and steering directions are stored to disk. For those who want to avoid this process, Udacity made also available an "off-the-shelf" training set. For this project, I employed this latter.
@@ -86,10 +87,12 @@ Model was compiled using Adam optimizer with default parameters and mean squared
 
 After the training, the network can successfully drive on both tracks. Quite surprisingly, it drives better and smoother on the test track with respect to the training track (at least from a qualitative point of view). I refer the reader to the [demo video](https://www.youtube.com/watch?v=gXkMELjZmCc) above for a visual evaluation of the model. This also comprises a visualization of the network's activations at different layer depth.
 
-### Discussion
-In my opinion, these were the two main challenges of the project:
+### Discussion and future works
+In my opinion, these were the two main challenges in this project:
 
 1. skew distribution of training data (strong bias towards 0)
 2. relatively few training data, in one track only (risk of overfitting)
 
-Both these challenges has been solved, or at least mitigated, using aggressive data augmentation and dropoout. The main drawback I notice is that now the network has some difficulties in going just straight: it tends to steer a little too much even when no steering at all is needed. Beside this aspect, the network is able to safely drive on both tracks, never leaving the drivable portion of the track surface.
+Both these challenges has been solved, or at least mitigated, using aggressive data augmentation and dropoout. The main drawback I notice is that now the network has some difficulties in going just straight: it tends to steer a little too much even when no steering at all is needed. Beside this aspect, the network is able to safely drive on both tracks, never leaving the drivable portion of the track surface. 
+
+There's still a lot of room for future improvements. Among these, would be interesting to predict the car *throttle* along with the steering angle. In this way the car would be able to mantain its speed constant even on the second track which is plenty of hills. Furthermore, at the current state enhancing the graphic quality of the simulator leads to worse results, as the network is not able to handle graphic details such as *e.g.* shadows. Collecting data from the simulator set with better graphic quality along with the appropriate data augmentation would likely mitigate this problem.
