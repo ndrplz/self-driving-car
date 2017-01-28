@@ -5,6 +5,11 @@
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=gXkMELjZmCc" target="_blank"><img src="http://img.youtube.com/vi/gXkMELjZmCc/0.jpg" 
 alt="project3" width="240" height="180" border="10" /></a>
 
+## Code overview
+
+The code is structured as follows:
+
+
 ## Goal
 The goal of the project was to train a Deep Network to replicate the human steering behavior while driving, thus being able to drive autonomously on a simulator provided by [Udacity](https://www.udacity.com/). To this purpose, the network takes as input the frame of the frontal camera (say, a roof-mounted camera) and predicts the steering direction at each instant.
 
@@ -67,14 +72,18 @@ Convolutional layers are followed by 3 fully-connected layers: finally, a last s
 
 ### Preventing overfitting
 
-Despite the strong data augmentation mentioned above, there's still room for the major nightmare of the data scientis, a.k.a. overfitting. In order to prevent the network from falling in love with the training track, dropout layers are added after each convolutional layer (*drop prob=0.2*) and after each fully-connected layer (*drop prob=0.5*) but the last one.
+Despite the strong data augmentation mentioned above, there's still room for the major nightmare of the data scientis, a.k.a. overfitting. In order to prevent the network from falling in love with the training track, dropout layers are aggressively added after each convolutional layer (*drop prob=0.2*) and after each fully-connected layer (*drop prob=0.5*) but the last one.
 
 ### Training Details
 
-Model was compiled using Adam optimizer with default parameters and mean squared error loss w.r.t. the ground truth steering angle. Training took a couple of hours on the GPU of my laptop (NVIDIA GeForce GTX 960M).
+Model was compiled using Adam optimizer with default parameters and mean squared error loss w.r.t. the ground truth steering angle. Training took a couple of hours on the GPU of my laptop (NVIDIA GeForce GTX 960M). During the training `bias` parameter was set to 0.8, frame brightness (V channel) was augmented in the range [0.2, 1.5] with respect to the original one. Normal distributed noise added to the steering angle had parameters *mean=0*, *std=0.2*. Frame flipping was random with probabililty *0.5*.
 
 ## Testing the model
 
-After the training, the network can successfully drive on both tracks. Quite surprisingly, it drives better and smoother on the test track with respect to the training track (at least from a qualitative point of view). 
+After the training, the network can successfully drive on both tracks. Quite surprisingly, it drives better and smoother on the test track with respect to the training track (at least from a qualitative point of view). I refer the reader to the [demo video](https://www.youtube.com/watch?v=gXkMELjZmCc) above for a visual evaluation of the model. This also comprises a visualization of the network's activations at different layer depth.
 
 ### Discussion
+In my opinion, these were the two main challenges of the project:
+1. skew distribution of training data (strong bias towards 0)
+2. relatively few training data, in one track only (risk of overfitting)
+Both these challenges has been solved, or at least mitigated, using aggressive data augmentation and dropoout. The main drawback I notice is that now the network has some difficulties in going just straight: it tends to steer a little too much even when no steering at all is needed. Beside this aspect, the network is able to safely drive on both tracks, never leaving the drivable portion of the track surface.
