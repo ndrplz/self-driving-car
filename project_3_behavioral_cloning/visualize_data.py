@@ -1,18 +1,8 @@
 from load_data import load_data_batch, split_train_val
-from os.path import join
 import cv2
 import numpy as np
-import csv
-from sklearn.utils import shuffle
-from sklearn.model_selection import train_test_split
-from keras.optimizers import Adam
-from keras.models import Model
-from keras.layers import Input, Convolution2D, MaxPooling2D, Flatten, Dense, Dropout
-from keras.callbacks import ModelCheckpoint
 import matplotlib.pyplot as plt
-import random
-import keras.backend as K
-from config import *
+import os.path as path
 
 
 def visualize_steering_distribution(train_data):
@@ -56,6 +46,34 @@ if __name__ == '__main__':
     # visualize_steering_distribution(train_data)
 
     # visualize_bias_parameter_effect(train_data)
+
+    # np.float(train_data[:, 3])
+
+    from load_data import preprocess
+
+    for i in range(len(train_data)):
+        central_frame = cv2.imread(path.join('data', train_data[i][0]))
+        steering = np.float32(train_data[i][3])
+        if train_data[i][0] == 'IMG/center_2016_12_01_13_34_43_116.jpg'\
+            or train_data[i][0] == 'IMG/center_2016_12_01_13_46_20_434.jpg'\
+                or train_data[i][0] == 'IMG/center_2016_12_01_13_39_48_531.jpg':
+
+            plt.close('all')
+            proc_frame = preprocess(central_frame)
+            plt.imshow(cv2.cvtColor(proc_frame.astype(np.uint8), code=cv2.COLOR_BGR2RGB))
+            print('{}'.format(train_data[i][0]))
+            plt.title('Steering: {:03f}'.format(steering))
+            plt.gca().set_axis_off()
+            filename = path.join('.', '{}.png'.format(train_data[i][0]))
+            plt.savefig(filename, facecolor='white', bbox_inches='tight')
+
+            plt.close('all')
+            plt.imshow(cv2.cvtColor(central_frame, code=cv2.COLOR_BGR2RGB))
+            print('{}'.format(train_data[i][0]))
+            plt.title('Steering: {:03f}'.format(steering))
+            plt.gca().set_axis_off()
+            filename = path.join('.', '{}'.format(train_data[i][0]))
+            plt.savefig(filename, facecolor='white', bbox_inches='tight')
 
 
 
