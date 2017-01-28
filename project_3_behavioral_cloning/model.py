@@ -1,10 +1,9 @@
-from keras.optimizers import Adam
 from keras.models import Model
 from keras.layers import Input, Convolution2D, Flatten, Dense, Dropout, ELU, Lambda
 from keras.callbacks import ModelCheckpoint, CSVLogger
 import keras.backend as K
 from config import *
-from load_data import load_data_batch, generate_data_batch, split_train_val
+from load_data import generate_data_batch, split_train_val
 
 
 def get_nvidia_model(summary=True):
@@ -14,6 +13,7 @@ def get_nvidia_model(summary=True):
 
     The paper describes the network architecture but doesn't go into details for some aspects.
     Input normalization, as well as ELU activations are just my personal implementation choice.
+
     :param summary: show model summary
     :return: keras Model of NVIDIA architecture
     """
@@ -65,20 +65,22 @@ def get_nvidia_model(summary=True):
 
 if __name__ == '__main__':
 
+    # split udacity csv data into training and validation
     train_data, val_data = split_train_val(csv_driving_data='data/driving_log.csv')
 
+    # get network model and compile it (default Adam opt)
     nvidia_net = get_nvidia_model(summary=True)
-
-    opt = Adam(lr=1e-3)
-    nvidia_net.compile(optimizer=opt, loss='mse')
+    nvidia_net.compile(optimizer='adam', loss='mse')
 
     # json dump of model architecture
     with open('logs/model.json', 'w') as f:
         f.write(nvidia_net.to_json())
 
+    # define callbacks to save history and weights
     checkpointer = ModelCheckpoint('checkpoints/weights.{epoch:02d}-{val_loss:.3f}.hdf5')
     logger = CSVLogger(filename='logs/history.csv')
 
+    # start the training
     nvidia_net.fit_generator(generator=generate_data_batch(train_data, augment_data=True, bias=CONFIG['bias']),
                          samples_per_epoch=300*CONFIG['batchsize'],
                          nb_epoch=50,

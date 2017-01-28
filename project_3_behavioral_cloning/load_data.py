@@ -4,10 +4,6 @@ import numpy as np
 import csv
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
-from keras.optimizers import Adam
-from keras.models import Model
-from keras.layers import Input, Convolution2D, MaxPooling2D, Flatten, Dense, Dropout
-from keras.callbacks import ModelCheckpoint
 import matplotlib.pyplot as plt
 import random
 import keras.backend as K
