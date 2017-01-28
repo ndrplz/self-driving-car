@@ -84,6 +84,8 @@ After the training, the network can successfully drive on both tracks. Quite sur
 
 ### Discussion
 In my opinion, these were the two main challenges of the project:
+
 1. skew distribution of training data (strong bias towards 0)
 2. relatively few training data, in one track only (risk of overfitting)
+
 Both these challenges has been solved, or at least mitigated, using aggressive data augmentation and dropoout. The main drawback I notice is that now the network has some difficulties in going just straight: it tends to steer a little too much even when no steering at all is needed. Beside this aspect, the network is able to safely drive on both tracks, never leaving the drivable portion of the track surface.
