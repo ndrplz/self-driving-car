@@ -3,6 +3,7 @@ import cv2
 import glob
 import matplotlib.pyplot as plt
 from calibration_utils import calibrate_camera, undistort
+from binarization_utils import binarize
 
 if __name__ == '__main__':
 
@@ -13,6 +14,8 @@ if __name__ == '__main__':
 
         img = cv2.imread(test_img)
 
-        undistorted_img = undistort(img, mtx, dist, verbose=False)
+        img_undistorted = undistort(img, mtx, dist, verbose=False)
+
+        img_binary = binarize(img_undistorted)
 
 
