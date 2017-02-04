@@ -6,11 +6,11 @@ import os.path as path
 import pickle
 
 
-white_HSV_th_min = np.array([0, 0, 210])
-white_HSV_th_max = np.array([255, 255, 255])
+white_HSV_th_min = np.array([20, 0, 180])
+white_HSV_th_max = np.array([255, 80, 255])
 
-yellow_HSV_th_min = np.array([0, 80, 210])
-yellow_HSV_th_max = np.array([30, 255, 255])
+yellow_HSV_th_min = np.array([0, 100, 100])
+yellow_HSV_th_max = np.array([50, 255, 255])
 
 
 def thresh_frame_in_HSV(frame, min_values, max_values, verbose=False):
@@ -44,12 +44,12 @@ def thresh_frame_sobel(frame, kernel_size):
     return sobel_mag.astype(bool)
 
 
-def binarize(img, verbose=False):
+def binarize(img, subsample=None, verbose=False):
 
-    subsample = 2
     h, w = img.shape[:2]
 
-    img = cv2.resize(img, dsize=(w // subsample, h // subsample))
+    if subsample:
+        img = cv2.resize(img, dsize=(w // subsample, h // subsample))
 
     white_binary = thresh_frame_in_HSV(img, white_HSV_th_min, white_HSV_th_max)
     yellow_binary = thresh_frame_in_HSV(img, yellow_HSV_th_min, yellow_HSV_th_max)
@@ -79,7 +79,7 @@ def binarize(img, verbose=False):
         ax[1, 1].set_axis_off()
         plt.show()
 
-    return img
+    return closing
 
 
 if __name__ == '__main__':

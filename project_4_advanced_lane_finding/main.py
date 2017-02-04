@@ -4,6 +4,8 @@ import glob
 import matplotlib.pyplot as plt
 from calibration_utils import calibrate_camera, undistort
 from binarization_utils import binarize
+from perspective_utils import birdeye
+
 
 if __name__ == '__main__':
 
@@ -16,6 +18,8 @@ if __name__ == '__main__':
 
         img_undistorted = undistort(img, mtx, dist, verbose=False)
 
-        img_binary = binarize(img_undistorted)
+        img_binary = binarize(img_undistorted, verbose=False)
+
+        img_birdeye, M, Minv = birdeye(img_binary, verbose=True)
 
 
