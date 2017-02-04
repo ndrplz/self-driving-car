@@ -8,7 +8,7 @@ import pickle
 
 def lazy_calibration(func):
 
-    calibration_cache = 'calibration_data'
+    calibration_cache = 'calibration_data.pickle'
 
     def wrapper(*args, **kwargs):
         if path.exists(calibration_cache):
@@ -71,13 +71,20 @@ def calibrate_camera(calib_images_dir, verbose=False):
     return ret, mtx, dist, rvecs, tvecs
 
 
-def undistort(bgr_frame, mtx, dist, verbose=False):
-
-    frame_undistorted = cv2.undistort(bgr_frame, mtx, dist, newCameraMatrix=mtx)
+def undistort(frame, mtx, dist, verbose=False):
+    """
+    Undistort a frame given camera matrix and distortion coefficients.
+    :param frame: input frame
+    :param mtx: camera matrix
+    :param dist: distortion coefficients
+    :param verbose: if True, show frame before/after distortion correction
+    :return: undistorted frame
+    """
+    frame_undistorted = cv2.undistort(frame, mtx, dist, newCameraMatrix=mtx)
 
     if verbose:
         fig, ax = plt.subplots(nrows=1, ncols=2)
-        ax[0].imshow(cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB))
+        ax[0].imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         ax[1].imshow(cv2.cvtColor(frame_undistorted, cv2.COLOR_BGR2RGB))
         plt.show()
 
