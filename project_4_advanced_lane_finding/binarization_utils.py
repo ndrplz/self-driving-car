@@ -2,8 +2,6 @@ import cv2
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
-import os.path as path
-import pickle
 
 
 white_HSV_th_min = np.array([20, 0, 180])
@@ -44,34 +42,34 @@ def thresh_frame_sobel(frame, kernel_size):
     return sobel_mag.astype(bool)
 
 
-def thresh_frame_canny(frame, verbose=False):
+def get_binary_from_equalized_grayscale(frame):
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    gray = cv2.GaussianBlur(gray, ksize=(5, 3), sigmaX=3)
+    eq_global = cv2.equalizeHist(gray)
 
-    mask_canny = cv2.Canny(gray, 50, 100)
+    _, th = cv2.threshold(eq_global, thresh=250, maxval=255, type=cv2.THRESH_BINARY)
 
-    return mask_canny
+    return th
 
 
-def binarize(img, subsample=None, verbose=False):
+def binarize(img, verbose=False):
 
     h, w = img.shape[:2]
 
-    if subsample:
-        img = cv2.resize(img, dsize=(w // subsample, h // subsample))
+    binary = np.zeros(shape=(h, w), dtype=np.uint8)
 
-    white_binary = thresh_frame_in_HSV(img, white_HSV_th_min, white_HSV_th_max)
-    yellow_binary = thresh_frame_in_HSV(img, yellow_HSV_th_min, yellow_HSV_th_max)
+    HSV_white_mask = thresh_frame_in_HSV(img, white_HSV_th_min, white_HSV_th_max, verbose=False)
+    binary = np.logical_or(binary, HSV_white_mask)
 
-    mask_HSV = np.logical_or(white_binary, yellow_binary)
+    HSV_yellow_mask = thresh_frame_in_HSV(img, yellow_HSV_th_min, yellow_HSV_th_max, verbose=False)
+    binary = np.logical_or(binary, HSV_yellow_mask)
 
-    mask_sobel = thresh_frame_sobel(img, kernel_size=9)
-    binary = np.logical_or(mask_HSV, mask_sobel)
+    eq_white_mask = get_binary_from_equalized_grayscale(img)
+    binary = np.logical_or(binary, eq_white_mask)
 
-    mask_canny = thresh_frame_canny(img, verbose=True)
-    binary = np.logical_or(binary, mask_canny)
+    sobel_mask = thresh_frame_sobel(img, kernel_size=9)
+    binary = np.logical_or(binary, sobel_mask)
 
     kernel = np.ones((5, 5), np.uint8)
     closing = cv2.morphologyEx(binary.astype(np.uint8), cv2.MORPH_CLOSE, kernel)
@@ -81,21 +79,21 @@ def binarize(img, subsample=None, verbose=False):
         ax[0, 0].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         ax[0, 0].set_title('input_frame')
         ax[0, 0].set_axis_off()
-        ax[0, 1].imshow(mask_canny, cmap='gray')
-        ax[0, 1].set_title('canny binary')
-        ax[0, 1].set_axis_off()
-        ax[0, 2].imshow(mask_sobel, cmap='gray')
+        ax[0, 2].imshow(sobel_mask, cmap='gray')
         ax[0, 2].set_title('sobel binary')
         ax[0, 2].set_axis_off()
-        ax[1, 0].imshow(white_binary, cmap='gray')
+        ax[1, 0].imshow(HSV_white_mask, cmap='gray')
         ax[1, 0].set_title('white binary')
         ax[1, 0].set_axis_off()
-        ax[1, 1].imshow(yellow_binary, cmap='gray')
+        ax[1, 1].imshow(HSV_yellow_mask, cmap='gray')
         ax[1, 1].set_title('yellow binary')
         ax[1, 1].set_axis_off()
         ax[1, 2].imshow(binary, cmap='gray')
         ax[1, 2].set_title('before close')
         ax[1, 2].set_axis_off()
+        ax[2, 0].imshow(eq_white_mask, cmap='gray')
+        ax[2, 0].set_title('equalization')
+        ax[2, 0].set_axis_off()
         ax[2, 2].imshow(closing, cmap='gray')
         ax[2, 2].set_title('after close')
         ax[2, 2].set_axis_off()
@@ -109,5 +107,4 @@ if __name__ == '__main__':
     test_images = glob.glob('test_images/*.jpg')
     for test_image in test_images:
         img = cv2.imread(test_image)
-
         binarize(img=img, verbose=True)

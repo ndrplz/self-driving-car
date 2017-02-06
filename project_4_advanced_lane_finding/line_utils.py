@@ -1,19 +1,66 @@
 import numpy as np
 import cv2
 import glob
+import collections
 import matplotlib.pyplot as plt
 from calibration_utils import calibrate_camera, undistort
 from binarization_utils import binarize
 from perspective_utils import birdeye
 
 
-def get_fits_by_sliding_windows(birdeye_binary, n_windows=9, verbose=False):
+class Line:
+
+    def __init__(self, buffer_len=10):
+
+        self.last_fit = None
+        self.recent_fits = collections.deque(maxlen=buffer_len)
+
+        self.radius_of_curvature = None
+
+    def update_line(self, new_fit, clear_buffer=False):
+
+        if clear_buffer:
+            self.recent_fits = []
+
+        self.last_fit = new_fit
+        self.recent_fits.append(self.last_fit)
+
+    @property
+    def average_fit(self):
+        return np.mean(self.recent_fits, axis=0)
+
+
+# class Line:
+#     def __init__(self):
+#         # was the line detected in the last iteration?
+#         self.detected = False
+#         # x values of the last n fits of the line
+#         self.recent_xfitted = []
+#         #average x values of the fitted line over the last n iterations
+#         self.bestx = None
+#         #polynomial coefficients averaged over the last n iterations
+#         self.best_fit = None
+#         #polynomial coefficients for the most recent fit
+#         self.current_fit = [np.array([False])]
+#         #radius of curvature of the line in some units
+#         self.radius_of_curvature = None
+#         #distance in meters of vehicle center from the line
+#         self.line_base_pos = None
+#         #difference in fit coefficients between last and new fits
+#         self.diffs = np.array([0,0,0], dtype='float')
+#         #x values for detected line pixels
+#         self.allx = None
+#         #y values for detected line pixels
+#         self.ally = None
+
+
+def get_fits_by_sliding_windows(birdeye_binary, line_lt, line_rt, n_windows=9, verbose=False):
 
     height, width = birdeye_binary.shape
 
     # Assuming you have created a warped binary image called "binary_warped"
     # Take a histogram of the bottom half of the image
-    histogram = np.sum(birdeye_binary[height / 2:, :], axis=0)
+    histogram = np.sum(birdeye_binary[height // 2:, :], axis=0)
 
     # Create an output image to draw on and  visualize the result
     out_img = np.dstack((birdeye_binary, birdeye_binary, birdeye_binary)) * 255
@@ -78,10 +125,66 @@ def get_fits_by_sliding_windows(birdeye_binary, n_windows=9, verbose=False):
     right_lane_inds = np.concatenate(right_lane_inds)
 
     # Extract left and right line pixel positions
-    leftx = nonzero_x[left_lane_inds]
-    lefty = nonzero_y[left_lane_inds]
-    rightx = nonzero_x[right_lane_inds]
-    righty = nonzero_y[right_lane_inds]
+    left_x, left_y = nonzero_x[left_lane_inds], nonzero_y[left_lane_inds]
+    right_x, right_y = nonzero_x[right_lane_inds], nonzero_y[right_lane_inds]
+
+    # todo sanity checks here before computing polynomial
+
+    if not list(left_x) or not list(left_y):
+        left_fit = line_lt.last_fit
+    else:
+        left_fit = np.polyfit(left_y, left_x, 2)
+
+    if not list(right_x) or not list(right_y):
+        right_fit = line_rt.last_fit
+    else:
+        right_fit = np.polyfit(right_y, right_x, 2)
+
+    line_lt.update_line(new_fit=left_fit)
+    line_rt.update_line(new_fit=right_fit)
+
+    # Generate x and y values for plotting
+    ploty = np.linspace(0, height - 1, height)
+    left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
+    right_fitx = right_fit[0] * ploty ** 2 + right_fit[1] * ploty + right_fit[2]
+
+    out_img[nonzero_y[left_lane_inds], nonzero_x[left_lane_inds]] = [255, 0, 0]
+    out_img[nonzero_y[right_lane_inds], nonzero_x[right_lane_inds]] = [0, 0, 255]
+
+    if verbose:
+        plt.imshow(out_img)
+
+        plt.plot(left_fitx, ploty, color='yellow')
+        plt.plot(right_fitx, ploty, color='yellow')
+
+        plt.xlim(0, 1280)
+        plt.ylim(720, 0)
+
+        plt.show()
+
+    return line_lt, line_rt, out_img
+
+
+def get_fits_by_previous_fits(birdeye_binary, left_fit, right_fit, verbose=False):
+
+    height, width = birdeye_binary.shape
+
+    nonzero = birdeye_binary.nonzero()
+    nonzeroy = np.array(nonzero[0])
+    nonzerox = np.array(nonzero[1])
+    margin = 100
+    left_lane_inds = (
+    (nonzerox > (left_fit[0] * (nonzeroy ** 2) + left_fit[1] * nonzeroy + left_fit[2] - margin)) & (
+    nonzerox < (left_fit[0] * (nonzeroy ** 2) + left_fit[1] * nonzeroy + left_fit[2] + margin)))
+    right_lane_inds = (
+    (nonzerox > (right_fit[0] * (nonzeroy ** 2) + right_fit[1] * nonzeroy + right_fit[2] - margin)) & (
+    nonzerox < (right_fit[0] * (nonzeroy ** 2) + right_fit[1] * nonzeroy + right_fit[2] + margin)))
+
+    # Again, extract left and right line pixel positions
+    leftx = nonzerox[left_lane_inds]
+    lefty = nonzeroy[left_lane_inds]
+    rightx = nonzerox[right_lane_inds]
+    righty = nonzeroy[right_lane_inds]
 
     # Fit a second order polynomial to each
     left_fit = np.polyfit(lefty, leftx, 2)
@@ -93,13 +196,29 @@ def get_fits_by_sliding_windows(birdeye_binary, n_windows=9, verbose=False):
         left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
         right_fitx = right_fit[0] * ploty ** 2 + right_fit[1] * ploty + right_fit[2]
 
-        out_img[nonzero_y[left_lane_inds], nonzero_x[left_lane_inds]] = [255, 0, 0]
-        out_img[nonzero_y[right_lane_inds], nonzero_x[right_lane_inds]] = [0, 0, 255]
-        plt.imshow(out_img)
+        # Create an image to draw on and an image to show the selection window
+        out_img = np.dstack((birdeye_binary, birdeye_binary, birdeye_binary)) * 255
+        window_img = np.zeros_like(out_img)
+        # Color in left and right line pixels
+        out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
+        out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
 
+        # Generate a polygon to illustrate the search window area
+        # And recast the x and y points into usable format for cv2.fillPoly()
+        left_line_window1 = np.array([np.transpose(np.vstack([left_fitx - margin, ploty]))])
+        left_line_window2 = np.array([np.flipud(np.transpose(np.vstack([left_fitx + margin, ploty])))])
+        left_line_pts = np.hstack((left_line_window1, left_line_window2))
+        right_line_window1 = np.array([np.transpose(np.vstack([right_fitx - margin, ploty]))])
+        right_line_window2 = np.array([np.flipud(np.transpose(np.vstack([right_fitx + margin, ploty])))])
+        right_line_pts = np.hstack((right_line_window1, right_line_window2))
+
+        # Draw the lane onto the warped blank image
+        cv2.fillPoly(window_img, np.int_([left_line_pts]), (0, 255, 0))
+        cv2.fillPoly(window_img, np.int_([right_line_pts]), (0, 255, 0))
+        result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
+        plt.imshow(result)
         plt.plot(left_fitx, ploty, color='yellow')
         plt.plot(right_fitx, ploty, color='yellow')
-
         plt.xlim(0, 1280)
         plt.ylim(720, 0)
 
@@ -140,6 +259,8 @@ def draw_back_onto_the_road(img_undistorted, birdeye_binary, Minv, left_fit, rig
 
 if __name__ == '__main__':
 
+    line_lt, line_rt = Line(buffer_len=10), Line(buffer_len=10)
+
     ret, mtx, dist, rvecs, tvecs = calibrate_camera(calib_images_dir='camera_cal')
 
     # show result on test images
@@ -153,68 +274,21 @@ if __name__ == '__main__':
 
         img_birdeye, M, Minv = birdeye(img_binary, verbose=False)
 
-        left_fit, right_fit = get_fits_by_sliding_windows(img_birdeye, n_windows=7, verbose=True)
+        line_lt, line_rt = get_fits_by_sliding_windows(img_birdeye, line_lt, line_rt, n_windows=7, verbose=True)
 
-        blend = draw_back_onto_the_road(img_undistorted, img_birdeye, left_fit, right_fit)
+        # y_eval = 0#img.shape[0]//2
+        # left_curverad = ((1 + (2 * left_fit[0] * y_eval + left_fit[1]) ** 2) ** 1.5) / np.absolute(2 * left_fit[0])
+        # right_curverad = ((1 + (2 * right_fit[0] * y_eval + right_fit[1]) ** 2) ** 1.5) / np.absolute(2 * right_fit[0])
+        # print(left_curverad, right_curverad)
 
-        plt.imshow(cv2.cvtColor(blend, code=cv2.COLOR_BGR2RGB))
-        plt.show()
+        # left_fit, right_fit = get_fits_by_previous_fits(img_birdeye, left_fit, right_fit, verbose=True)
 
-
-
-
-        # # Assume you now have a new warped binary image
-        # # from the next frame of video (also called "binary_warped")
-        # # It's now much easier to find line pixels!
-        # nonzero = img_birdeye.nonzero()
-        # nonzeroy = np.array(nonzero[0])
-        # nonzerox = np.array(nonzero[1])
-        # margin = 100
-        # left_lane_inds = (
-        # (nonzerox > (left_fit[0] * (nonzeroy ** 2) + left_fit[1] * nonzeroy + left_fit[2] - margin)) & (
-        # nonzerox < (left_fit[0] * (nonzeroy ** 2) + left_fit[1] * nonzeroy + left_fit[2] + margin)))
-        # right_lane_inds = (
-        # (nonzerox > (right_fit[0] * (nonzeroy ** 2) + right_fit[1] * nonzeroy + right_fit[2] - margin)) & (
-        # nonzerox < (right_fit[0] * (nonzeroy ** 2) + right_fit[1] * nonzeroy + right_fit[2] + margin)))
-        #
-        # # Again, extract left and right line pixel positions
-        # leftx = nonzerox[left_lane_inds]
-        # lefty = nonzeroy[left_lane_inds]
-        # rightx = nonzerox[right_lane_inds]
-        # righty = nonzeroy[right_lane_inds]
-        # # Fit a second order polynomial to each
-        # left_fit = np.polyfit(lefty, leftx, 2)
-        # right_fit = np.polyfit(righty, rightx, 2)
-        # # Generate x and y values for plotting
-        # ploty = np.linspace(0, img_birdeye.shape[0] - 1, img_birdeye.shape[0])
-        # left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
-        # right_fitx = right_fit[0] * ploty ** 2 + right_fit[1] * ploty + right_fit[2]
-        #
-        # # Create an image to draw on and an image to show the selection window
-        # out_img = np.dstack((img_birdeye, img_birdeye, img_birdeye)) * 255
-        # window_img = np.zeros_like(out_img)
-        # # Color in left and right line pixels
-        # out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
-        # out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
-        #
-        # # Generate a polygon to illustrate the search window area
-        # # And recast the x and y points into usable format for cv2.fillPoly()
-        # left_line_window1 = np.array([np.transpose(np.vstack([left_fitx - margin, ploty]))])
-        # left_line_window2 = np.array([np.flipud(np.transpose(np.vstack([left_fitx + margin, ploty])))])
-        # left_line_pts = np.hstack((left_line_window1, left_line_window2))
-        # right_line_window1 = np.array([np.transpose(np.vstack([right_fitx - margin, ploty]))])
-        # right_line_window2 = np.array([np.flipud(np.transpose(np.vstack([right_fitx + margin, ploty])))])
-        # right_line_pts = np.hstack((right_line_window1, right_line_window2))
-        #
-        # # Draw the lane onto the warped blank image
-        # cv2.fillPoly(window_img, np.int_([left_line_pts]), (0, 255, 0))
-        # cv2.fillPoly(window_img, np.int_([right_line_pts]), (0, 255, 0))
-        # result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
-        # plt.imshow(result)
-        # plt.plot(left_fitx, ploty, color='yellow')
-        # plt.plot(right_fitx, ploty, color='yellow')
-        # plt.xlim(0, 1280)
-        # plt.ylim(720, 0)
-        #
+        # blend = draw_back_onto_the_road(img_undistorted, img_birdeye, Minv, left_fit, right_fit)
+        # plt.imshow(cv2.cvtColor(blend, code=cv2.COLOR_BGR2RGB))
         # plt.show()
+
+
+
+
+
 
