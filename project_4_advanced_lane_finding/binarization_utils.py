@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 white_HSV_th_min = np.array([20, 0, 180])
 white_HSV_th_max = np.array([255, 80, 255])
 
-yellow_HSV_th_min = np.array([0, 100, 100])
+yellow_HSV_th_min = np.array([0, 70, 70])
 yellow_HSV_th_max = np.array([50, 255, 255])
 
 
