@@ -64,8 +64,6 @@ def calibrate_camera(calib_images_dir, verbose=False):
     if verbose:
         cv2.destroyAllWindows()
 
-    # http://docs.opencv.org/2.4.1/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#calibratecamera
-
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 
     return ret, mtx, dist, rvecs, tvecs

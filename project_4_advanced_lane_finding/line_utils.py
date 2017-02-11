@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from calibration_utils import calibrate_camera, undistort
 from binarization_utils import binarize
 from perspective_utils import birdeye
+from globals import ym_per_pix, xm_per_pix
 
 
 class Line:
@@ -16,10 +17,12 @@ class Line:
         self.detected = False
 
         # polynomial coefficients fitted on the last iteration
-        self.last_fit = None
+        self.last_fit_pixel = None
+        self.last_fit_meter = None
 
         # list of polynomial coefficients of the last N iterations
-        self.recent_fits = collections.deque(maxlen=buffer_len)
+        self.recent_fits_pixel = collections.deque(maxlen=buffer_len)
+        self.recent_fits_meter = collections.deque(maxlen=2 * buffer_len)
 
         self.radius_of_curvature = None
 
@@ -27,22 +30,26 @@ class Line:
         self.all_x = None
         self.all_y = None
 
-    def update_line(self, new_fit, detected, clear_buffer=False):
+    def update_line(self, new_fit_pixel, new_fit_meter, detected, clear_buffer=False):
 
         self.detected = detected
 
         if clear_buffer:
-            self.recent_fits = []
+            self.recent_fits_pixel = []
+            self.recent_fits_meter = []
 
-        self.last_fit = new_fit
-        self.recent_fits.append(self.last_fit)
+        self.last_fit_pixel = new_fit_pixel
+        self.last_fit_meter = new_fit_meter
+
+        self.recent_fits_pixel.append(self.last_fit_pixel)
+        self.recent_fits_meter.append(self.last_fit_meter)
 
     def draw(self, mask, color=(255, 0, 0), line_width=50, average=False):
 
         h, w, c = mask.shape
 
         plot_y = np.linspace(0, h - 1, h)
-        coeffs = self.average_fit if average else self.last_fit
+        coeffs = self.average_fit if average else self.last_fit_pixel
 
         line_center = coeffs[0] * plot_y ** 2 + coeffs[1] * plot_y + coeffs[2]
         line_left_side = line_center - line_width // 2
@@ -59,13 +66,20 @@ class Line:
     @property
     # average of polynomial coefficients of the last N iterations
     def average_fit(self):
-        return np.mean(self.recent_fits, axis=0)
+        return np.mean(self.recent_fits_pixel, axis=0)
 
     @property
     # radius of curvature of the line (averaged)
     def curvature(self):
         y_eval = 0
         coeffs = self.average_fit
+        return ((1 + (2 * coeffs[0] * y_eval + coeffs[1]) ** 2) ** 1.5) / np.absolute(2 * coeffs[0])
+
+    @property
+    # radius of curvature of the line (averaged)
+    def curvature_meter(self):
+        y_eval = 0
+        coeffs = np.mean(self.recent_fits_meter, axis=0)
         return ((1 + (2 * coeffs[0] * y_eval + coeffs[1]) ** 2) ** 1.5) / np.absolute(2 * coeffs[0])
 
 
@@ -143,28 +157,30 @@ def get_fits_by_sliding_windows(birdeye_binary, line_lt, line_rt, n_windows=9, v
     line_lt.all_x, line_lt.all_y = nonzero_x[left_lane_inds], nonzero_y[left_lane_inds]
     line_rt.all_x, line_rt.all_y = nonzero_x[right_lane_inds], nonzero_y[right_lane_inds]
 
-    # todo sanity checks here before computing polynomial
-
     detected = True
     if not list(line_lt.all_x) or not list(line_lt.all_y):
-        left_fit = line_lt.last_fit
+        left_fit_pixel = line_lt.last_fit_pixel
+        left_fit_meter = line_lt.last_fit_meter
         detected = False
     else:
-        left_fit = np.polyfit(line_lt.all_y, line_lt.all_x, 2)
+        left_fit_pixel = np.polyfit(line_lt.all_y, line_lt.all_x, 2)
+        left_fit_meter = np.polyfit(line_lt.all_y * ym_per_pix, line_lt.all_x * xm_per_pix, 2)
 
     if not list(line_rt.all_x) or not list(line_rt.all_y):
-        right_fit = line_rt.last_fit
+        right_fit_pixel = line_rt.last_fit_pixel
+        right_fit_meter = line_rt.last_fit_meter
         detected = False
     else:
-        right_fit = np.polyfit(line_rt.all_y, line_rt.all_x, 2)
+        right_fit_pixel = np.polyfit(line_rt.all_y, line_rt.all_x, 2)
+        right_fit_meter = np.polyfit(line_rt.all_y * ym_per_pix, line_rt.all_x * xm_per_pix, 2)
 
-    line_lt.update_line(new_fit=left_fit, detected=detected)
-    line_rt.update_line(new_fit=right_fit, detected=detected)
+    line_lt.update_line(left_fit_pixel, left_fit_meter, detected=detected)
+    line_rt.update_line(right_fit_pixel, right_fit_meter, detected=detected)
 
     # Generate x and y values for plotting
     ploty = np.linspace(0, height - 1, height)
-    left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
-    right_fitx = right_fit[0] * ploty ** 2 + right_fit[1] * ploty + right_fit[2]
+    left_fitx = left_fit_pixel[0] * ploty ** 2 + left_fit_pixel[1] * ploty + left_fit_pixel[2]
+    right_fitx = right_fit_pixel[0] * ploty ** 2 + right_fit_pixel[1] * ploty + right_fit_pixel[2]
 
     out_img[nonzero_y[left_lane_inds], nonzero_x[left_lane_inds]] = [255, 0, 0]
     out_img[nonzero_y[right_lane_inds], nonzero_x[right_lane_inds]] = [0, 0, 255]
@@ -187,19 +203,19 @@ def get_fits_by_previous_fits(birdeye_binary, line_lt, line_rt, verbose=False):
 
     height, width = birdeye_binary.shape
 
-    left_fit = line_lt.last_fit
-    right_fit = line_rt.last_fit
+    left_fit_pixel = line_lt.last_fit_pixel
+    right_fit_pixel = line_rt.last_fit_pixel
 
     nonzero = birdeye_binary.nonzero()
     nonzero_y = np.array(nonzero[0])
     nonzero_x = np.array(nonzero[1])
     margin = 100
     left_lane_inds = (
-    (nonzero_x > (left_fit[0] * (nonzero_y ** 2) + left_fit[1] * nonzero_y + left_fit[2] - margin)) & (
-    nonzero_x < (left_fit[0] * (nonzero_y ** 2) + left_fit[1] * nonzero_y + left_fit[2] + margin)))
+    (nonzero_x > (left_fit_pixel[0] * (nonzero_y ** 2) + left_fit_pixel[1] * nonzero_y + left_fit_pixel[2] - margin)) & (
+    nonzero_x < (left_fit_pixel[0] * (nonzero_y ** 2) + left_fit_pixel[1] * nonzero_y + left_fit_pixel[2] + margin)))
     right_lane_inds = (
-    (nonzero_x > (right_fit[0] * (nonzero_y ** 2) + right_fit[1] * nonzero_y + right_fit[2] - margin)) & (
-    nonzero_x < (right_fit[0] * (nonzero_y ** 2) + right_fit[1] * nonzero_y + right_fit[2] + margin)))
+    (nonzero_x > (right_fit_pixel[0] * (nonzero_y ** 2) + right_fit_pixel[1] * nonzero_y + right_fit_pixel[2] - margin)) & (
+    nonzero_x < (right_fit_pixel[0] * (nonzero_y ** 2) + right_fit_pixel[1] * nonzero_y + right_fit_pixel[2] + margin)))
 
     # Extract left and right line pixel positions
     line_lt.all_x, line_lt.all_y = nonzero_x[left_lane_inds], nonzero_y[left_lane_inds]
@@ -207,24 +223,28 @@ def get_fits_by_previous_fits(birdeye_binary, line_lt, line_rt, verbose=False):
 
     detected = True
     if not list(line_lt.all_x) or not list(line_lt.all_y):
-        left_fit = line_lt.last_fit
+        left_fit_pixel = line_lt.last_fit_pixel
+        left_fit_meter = line_lt.last_fit_meter
         detected = False
     else:
-        left_fit = np.polyfit(line_lt.all_y, line_lt.all_x, 2)
+        left_fit_pixel = np.polyfit(line_lt.all_y, line_lt.all_x, 2)
+        left_fit_meter = np.polyfit(line_lt.all_y * ym_per_pix, line_lt.all_x * xm_per_pix, 2)
 
     if not list(line_rt.all_x) or not list(line_rt.all_y):
-        right_fit = line_rt.last_fit
+        right_fit_pixel = line_rt.last_fit_pixel
+        right_fit_meter = line_rt.last_fit_meter
         detected = False
     else:
-        right_fit = np.polyfit(line_rt.all_y, line_rt.all_x, 2)
+        right_fit_pixel = np.polyfit(line_rt.all_y, line_rt.all_x, 2)
+        right_fit_meter = np.polyfit(line_rt.all_y * ym_per_pix, line_rt.all_x * xm_per_pix, 2)
 
-    line_lt.update_line(new_fit=left_fit, detected=detected)
-    line_rt.update_line(new_fit=right_fit, detected=detected)
+    line_lt.update_line(left_fit_pixel, left_fit_meter, detected=detected)
+    line_rt.update_line(right_fit_pixel, right_fit_meter, detected=detected)
 
     # Generate x and y values for plotting
     ploty = np.linspace(0, height - 1, height)
-    left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
-    right_fitx = right_fit[0] * ploty ** 2 + right_fit[1] * ploty + right_fit[2]
+    left_fitx = left_fit_pixel[0] * ploty ** 2 + left_fit_pixel[1] * ploty + left_fit_pixel[2]
+    right_fitx = right_fit_pixel[0] * ploty ** 2 + right_fit_pixel[1] * ploty + right_fit_pixel[2]
 
     # Create an image to draw on and an image to show the selection window
     img_fit = np.dstack((birdeye_binary, birdeye_binary, birdeye_binary)) * 255
@@ -264,8 +284,8 @@ def draw_back_onto_the_road(img_undistorted, birdeye_binary, Minv, line_lt, line
 
     height, width = birdeye_binary.shape
 
-    left_fit = line_lt.average_fit if keep_state else line_lt.last_fit
-    right_fit = line_rt.average_fit if keep_state else line_rt.last_fit
+    left_fit = line_lt.average_fit if keep_state else line_lt.last_fit_pixel
+    right_fit = line_rt.average_fit if keep_state else line_rt.last_fit_pixel
 
     # Generate x and y values for plotting
     ploty = np.linspace(0, height - 1, height)

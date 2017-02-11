@@ -7,13 +7,12 @@ from perspective_utils import birdeye
 from line_utils import get_fits_by_sliding_windows, draw_back_onto_the_road, Line, get_fits_by_previous_fits
 from moviepy.editor import VideoFileClip
 import numpy as np
+from globals import xm_per_pix, time_window
 
 
-processed_frames = 0
-line_lt, line_rt = Line(buffer_len=10), Line(buffer_len=10)
-
-ym_per_pix = 30 / 720   # meters per pixel in y dimension
-xm_per_pix = 3.7 / 700  # meters per pixel in x dimension
+processed_frames = 0                    # counter of frames processed (when processing video)
+line_lt = Line(buffer_len=time_window)  # line on the left of the lane
+line_rt = Line(buffer_len=time_window)  # line on the right of the lane
 
 
 def prepare_out_blend_frame(blend_on_road, img_binary, img_birdeye, img_fit, line_lt, line_rt, offset_meter):
@@ -40,10 +39,10 @@ def prepare_out_blend_frame(blend_on_road, img_binary, img_birdeye, img_fit, lin
     thumb_img_fit = cv2.resize(img_fit, dsize=(thumb_w, thumb_h))
     blend_on_road[off_y:thumb_h+off_y, 3*off_x+2*thumb_w:3*(off_x+thumb_w), :] = thumb_img_fit
 
-    mean_curvature = np.mean([line_lt.curvature, line_rt.curvature])
+    mean_curvature_meter = np.mean([line_lt.curvature_meter, line_rt.curvature_meter])
     font = cv2.FONT_HERSHEY_SIMPLEX
-    cv2.putText(blend_on_road, 'Curvature radius: {:.02f}'.format(mean_curvature), (860, 40), font, 0.9, (255, 255, 255), 2, cv2.LINE_AA)
-    cv2.putText(blend_on_road, 'Offset from center: {:.02f}m'.format(offset_meter), (860, 80), font, 0.9, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.putText(blend_on_road, 'Curvature radius: {:.02f}m'.format(mean_curvature_meter), (860, 60), font, 0.9, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.putText(blend_on_road, 'Offset from center: {:.02f}m'.format(offset_meter), (860, 130), font, 0.9, (255, 255, 255), 2, cv2.LINE_AA)
 
     return blend_on_road
 
@@ -51,8 +50,8 @@ def prepare_out_blend_frame(blend_on_road, img_binary, img_birdeye, img_fit, lin
 def compute_offset_from_center(line_lt, line_rt, frame_width):
     if line_lt.detected and line_rt.detected:
         line_lt_bottom = np.mean(line_lt.all_x[line_lt.all_y > 0.95 * line_lt.all_y.max()])
-        line_rt_botton = np.mean(line_rt.all_x[line_rt.all_y > 0.95 * line_rt.all_y.max()])
-        lane_width = line_rt_botton - line_lt_bottom
+        line_rt_bottom = np.mean(line_rt.all_x[line_rt.all_y > 0.95 * line_rt.all_y.max()])
+        lane_width = line_rt_bottom - line_lt_bottom
         midpoint = frame_width / 2
         offset_pix = abs((line_lt_bottom + lane_width / 2) - midpoint)
         offset_meter = xm_per_pix * offset_pix
@@ -100,16 +99,17 @@ if __name__ == '__main__':
     # first things first: calibrate the camera
     ret, mtx, dist, rvecs, tvecs = calibrate_camera(calib_images_dir='camera_cal')
 
-    # selector = 'project'
-    # clip = VideoFileClip('{}_video.mp4'.format(selector)).fl_image(process_pipeline)
-    # clip.write_videofile('out_{}_10.mp4'.format(selector), audio=False)
+    selector = 'project'
+    clip = VideoFileClip('{}_video.mp4'.format(selector)).fl_image(process_pipeline)
+    clip.write_videofile('out_{}_{}.mp4'.format(selector, time_window), audio=False)
 
-    for test_img in glob.glob('test_images2/*.jpg'):
-
-        frame = cv2.imread(test_img)
-
-        blend = process_pipeline(frame, keep_state=False)
-
-        plt.imshow(cv2.cvtColor(blend, code=cv2.COLOR_BGR2RGB))
-
-        plt.show()
+    #
+    # for test_img in glob.glob('test_images2/*.jpg'):
+    #
+    #     frame = cv2.imread(test_img)
+    #
+    #     blend = process_pipeline(frame, keep_state=False)
+    #
+    #     plt.imshow(cv2.cvtColor(blend, code=cv2.COLOR_BGR2RGB))
+    #
+    #     plt.show()
