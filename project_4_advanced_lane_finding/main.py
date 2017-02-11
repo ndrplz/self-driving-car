@@ -8,11 +8,15 @@ from line_utils import get_fits_by_sliding_windows, draw_back_onto_the_road, Lin
 from moviepy.editor import VideoFileClip
 import numpy as np
 
+
 processed_frames = 0
-line_lt, line_rt = Line(buffer_len=5), Line(buffer_len=5)
+line_lt, line_rt = Line(buffer_len=10), Line(buffer_len=10)
+
+ym_per_pix = 30 / 720   # meters per pixel in y dimension
+xm_per_pix = 3.7 / 700  # meters per pixel in x dimension
 
 
-def prepare_out_blend_frame(blend_on_road, img_binary, img_birdeye, img_fit, line_lt, line_rt):
+def prepare_out_blend_frame(blend_on_road, img_binary, img_birdeye, img_fit, line_lt, line_rt, offset_meter):
 
     h, w = blend_on_road.shape[:2]
 
@@ -39,8 +43,23 @@ def prepare_out_blend_frame(blend_on_road, img_binary, img_birdeye, img_fit, lin
     mean_curvature = np.mean([line_lt.curvature, line_rt.curvature])
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(blend_on_road, 'Curvature radius: {:.02f}'.format(mean_curvature), (860, 40), font, 0.9, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.putText(blend_on_road, 'Offset from center: {:.02f}m'.format(offset_meter), (860, 80), font, 0.9, (255, 255, 255), 2, cv2.LINE_AA)
 
     return blend_on_road
+
+
+def compute_offset_from_center(line_lt, line_rt, frame_width):
+    if line_lt.detected and line_rt.detected:
+        line_lt_bottom = np.mean(line_lt.all_x[line_lt.all_y > 0.95 * line_lt.all_y.max()])
+        line_rt_botton = np.mean(line_rt.all_x[line_rt.all_y > 0.95 * line_rt.all_y.max()])
+        lane_width = line_rt_botton - line_lt_bottom
+        midpoint = frame_width / 2
+        offset_pix = abs((line_lt_bottom + lane_width / 2) - midpoint)
+        offset_meter = xm_per_pix * offset_pix
+    else:
+        offset_meter = -1
+
+    return offset_meter
 
 
 def process_pipeline(frame, keep_state=True):
@@ -62,16 +81,14 @@ def process_pipeline(frame, keep_state=True):
     else:
         line_lt, line_rt, img_fit = get_fits_by_sliding_windows(img_birdeye, line_lt, line_rt, n_windows=9, verbose=False)
 
+    # compute offset in meter from center of the lane
+    offset_meter = compute_offset_from_center(line_lt, line_rt, frame_width=frame.shape[1])
+
     # draw the surface enclosed by lane lines back onto the original frame
     blend_on_road = draw_back_onto_the_road(img_undistorted, img_birdeye, Minv, line_lt, line_rt, keep_state)
 
-    dewarped = cv2.warpPerspective(img_fit, Minv, img_fit.shape[:2][::-1], flags=cv2.INTER_LINEAR)
-    idx = np.any([dewarped != 0][0], axis=2)
-    mask = blend_on_road.copy()
-    mask[idx] = dewarped[idx]
-    blend_on_road = cv2.addWeighted(src1=mask, alpha=0.5, src2=blend_on_road, beta=0.5, gamma=0.)
-
-    blend_output = prepare_out_blend_frame(blend_on_road, img_binary, img_birdeye, img_fit, line_lt, line_rt)
+    # stitch on the top of final output images from different steps of the pipeline
+    blend_output = prepare_out_blend_frame(blend_on_road, img_binary, img_birdeye, img_fit, line_lt, line_rt, offset_meter)
 
     processed_frames += 1
 
@@ -83,16 +100,16 @@ if __name__ == '__main__':
     # first things first: calibrate the camera
     ret, mtx, dist, rvecs, tvecs = calibrate_camera(calib_images_dir='camera_cal')
 
-    selector = 'project'
-    clip = VideoFileClip('{}_video.mp4'.format(selector)).fl_image(process_pipeline)
-    clip.write_videofile('out_{}.mp4'.format(selector), audio=False)
+    # selector = 'project'
+    # clip = VideoFileClip('{}_video.mp4'.format(selector)).fl_image(process_pipeline)
+    # clip.write_videofile('out_{}_10.mp4'.format(selector), audio=False)
 
-    # for test_img in glob.glob('test_images2/*.jpg'):
-    #
-    #     frame = cv2.imread(test_img)
-    #
-    #     blend = process_pipeline(frame, keep_state=False)
-    #
-    #     plt.imshow(cv2.cvtColor(blend, code=cv2.COLOR_BGR2RGB))
-    #
-    #     plt.show()
+    for test_img in glob.glob('test_images2/*.jpg'):
+
+        frame = cv2.imread(test_img)
+
+        blend = process_pipeline(frame, keep_state=False)
+
+        plt.imshow(cv2.cvtColor(blend, code=cv2.COLOR_BGR2RGB))
+
+        plt.show()
