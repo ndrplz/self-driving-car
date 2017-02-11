@@ -8,7 +8,7 @@ import pickle
 
 def lazy_calibration(func):
 
-    calibration_cache = 'calibration_data.pickle'
+    calibration_cache = 'camera_cal/calibration_data.pickle'
 
     def wrapper(*args, **kwargs):
         if path.exists(calibration_cache):
