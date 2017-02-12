@@ -26,6 +26,7 @@ def birdeye(img, verbose=False):
 
     if verbose:
         f, axarray = plt.subplots(1, 2)
+        f.set_facecolor('white')
         axarray[0].set_title('Before perspective transform')
         axarray[0].imshow(img, cmap='gray')
         for point in src:
@@ -54,6 +55,6 @@ if __name__ == '__main__':
 
         img_binary = binarize(img_undistorted, verbose=False)
 
-        img_birdeye, M, Minv = birdeye(img_binary, verbose=True)
+        img_birdeye, M, Minv = birdeye(cv2.cvtColor(img_undistorted, cv2.COLOR_BGR2RGB), verbose=True)
 
 

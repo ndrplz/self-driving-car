@@ -87,3 +87,15 @@ def undistort(frame, mtx, dist, verbose=False):
         plt.show()
 
     return frame_undistorted
+
+
+if __name__ == '__main__':
+
+    ret, mtx, dist, rvecs, tvecs = calibrate_camera(calib_images_dir='camera_cal')
+
+    img = cv2.imread('test_images/test2.jpg')
+
+    img_undistorted = undistort(img, mtx, dist)
+
+    cv2.imwrite('img/test_calibration_before.jpg', img)
+    cv2.imwrite('img/test_calibration_after.jpg', img_undistorted)

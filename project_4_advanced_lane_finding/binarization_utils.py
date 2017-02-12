@@ -59,8 +59,8 @@ def binarize(img, verbose=False):
 
     binary = np.zeros(shape=(h, w), dtype=np.uint8)
 
-    HSV_white_mask = thresh_frame_in_HSV(img, white_HSV_th_min, white_HSV_th_max, verbose=False)
-    binary = np.logical_or(binary, HSV_white_mask)
+    # HSV_white_mask = thresh_frame_in_HSV(img, white_HSV_th_min, white_HSV_th_max, verbose=False)
+    # binary = np.logical_or(binary, HSV_white_mask)
 
     HSV_yellow_mask = thresh_frame_in_HSV(img, yellow_HSV_th_min, yellow_HSV_th_max, verbose=False)
     binary = np.logical_or(binary, HSV_yellow_mask)
@@ -75,28 +75,31 @@ def binarize(img, verbose=False):
     closing = cv2.morphologyEx(binary.astype(np.uint8), cv2.MORPH_CLOSE, kernel)
 
     if verbose:
-        f, ax = plt.subplots(3, 3)
+        f, ax = plt.subplots(2, 3)
+        f.set_facecolor('white')
         ax[0, 0].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         ax[0, 0].set_title('input_frame')
         ax[0, 0].set_axis_off()
-        ax[0, 2].imshow(sobel_mask, cmap='gray')
-        ax[0, 2].set_title('sobel binary')
+        ax[0, 0].set_axis_bgcolor('red')
+        ax[0, 1].imshow(eq_white_mask, cmap='gray')
+        ax[0, 1].set_title('white mask')
+        ax[0, 1].set_axis_off()
+
+        ax[0, 2].imshow(HSV_yellow_mask, cmap='gray')
+        ax[0, 2].set_title('yellow mask')
         ax[0, 2].set_axis_off()
-        ax[1, 0].imshow(HSV_white_mask, cmap='gray')
-        ax[1, 0].set_title('white binary')
+
+        ax[1, 0].imshow(sobel_mask, cmap='gray')
+        ax[1, 0].set_title('sobel mask')
         ax[1, 0].set_axis_off()
-        ax[1, 1].imshow(HSV_yellow_mask, cmap='gray')
-        ax[1, 1].set_title('yellow binary')
+
+        ax[1, 1].imshow(binary, cmap='gray')
+        ax[1, 1].set_title('before closure')
         ax[1, 1].set_axis_off()
-        ax[1, 2].imshow(binary, cmap='gray')
-        ax[1, 2].set_title('before close')
+
+        ax[1, 2].imshow(closing, cmap='gray')
+        ax[1, 2].set_title('after closure')
         ax[1, 2].set_axis_off()
-        ax[2, 0].imshow(eq_white_mask, cmap='gray')
-        ax[2, 0].set_title('equalization')
-        ax[2, 0].set_axis_off()
-        ax[2, 2].imshow(closing, cmap='gray')
-        ax[2, 2].set_title('after close')
-        ax[2, 2].set_axis_off()
         plt.show()
 
     return closing

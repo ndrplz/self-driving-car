@@ -186,13 +186,14 @@ def get_fits_by_sliding_windows(birdeye_binary, line_lt, line_rt, n_windows=9, v
     out_img[nonzero_y[right_lane_inds], nonzero_x[right_lane_inds]] = [0, 0, 255]
 
     if verbose:
-        plt.imshow(out_img)
-
-        plt.plot(left_fitx, ploty, color='yellow')
-        plt.plot(right_fitx, ploty, color='yellow')
-
-        plt.xlim(0, 1280)
-        plt.ylim(720, 0)
+        f, ax = plt.subplots(1, 2)
+        f.set_facecolor('white')
+        ax[0].imshow(birdeye_binary, cmap='gray')
+        ax[1].imshow(out_img)
+        ax[1].plot(left_fitx, ploty, color='yellow')
+        ax[1].plot(right_fitx, ploty, color='yellow')
+        ax[1].set_xlim(0, 1280)
+        ax[1].set_ylim(720, 0)
 
         plt.show()
 
@@ -334,7 +335,7 @@ if __name__ == '__main__':
 
         img_birdeye, M, Minv = birdeye(img_binary, verbose=False)
 
-        line_lt, line_rt = get_fits_by_sliding_windows(img_birdeye, line_lt, line_rt, n_windows=7, verbose=True)
+        line_lt, line_rt, img_out = get_fits_by_sliding_windows(img_birdeye, line_lt, line_rt, n_windows=7, verbose=True)
 
         # y_eval = 0#img.shape[0]//2
         # left_curverad = ((1 + (2 * left_fit[0] * y_eval + left_fit[1]) ** 2) ** 1.5) / np.absolute(2 * left_fit[0])

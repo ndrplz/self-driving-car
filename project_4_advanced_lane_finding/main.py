@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
         blend = process_pipeline(frame, keep_state=False)
 
-        cv2.imwrite('output_images/{}'.format(test_img), blend)
+        #cv2.imwrite('output_images/{}'.format(test_img), blend)
 
         plt.imshow(cv2.cvtColor(blend, code=cv2.COLOR_BGR2RGB))
         plt.show()
