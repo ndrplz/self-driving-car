@@ -27,8 +27,6 @@ The goals / steps of this project are the following:
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view)
 
----
-
 ### Camera Calibration
 
 OpenCV provide some really helpful built-in functions for the task on camera calibration. First of all, to detect the calibration pattern in the [calibration images](./camera_cal/), we can use the function `cv2.findChessboardCorners(image, pattern_size)`. 
@@ -37,48 +35,82 @@ Once we have stored the correspondeces between 3D world and 2D image points for 
 
 The code for this steps can be found in [calibration_utils](calibration_utils.py).   
 
-I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result: 
+I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained the following result (appreciating the effect of calibration is easier on the borders of the image): 
 
+<table style="width:100%">
+  <tr>
+    <th>
+      <p align="center">
+           <img src="./img/calibration_before.jpg" alt="calibration_before" width="60%" height="60%">
+           <br>Chessboard image before calibration
+      </p>
+    </th>
+    <th>
+      <p align="center">
+           <img src="./img/calibration_after.jpg" alt="calibration_after" width="60%" height="60%">
+           <br>Chessboard image after calibration
+      </p>
+    </th>
+  </tr>
+</table>
 
 ###Pipeline (single images)
 
 ####1. Provide an example of a distortion-corrected image.
-To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
-![alt text][image2]
-####2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
 
-![alt text][image3]
+Once the camera is calibrated, we can use the camera matrix and distortion coefficients we found to undistort also the test images. Indeed, if we want to study the *geometry* of the road, we have to be sure that the images we're processing do not present distortions. Here's the result of distortion-correction on one of the test images:
+
+<table style="width:100%">
+  <tr>
+    <th>
+      <p align="center">
+           <img src="./img/test_calibration_before.jpg" alt="calibration_before" width="60%" height="60%">
+           <br>Test image before calibration
+      </p>
+    </th>
+    <th>
+      <p align="center">
+           <img src="./img/test_calibration_after.jpg" alt="calibration_after" width="60%" height="60%">
+           <br>Test image after calibration
+      </p>
+    </th>
+  </tr>
+</table>
+
+In this case appreciating the result is slightly harder, but we can notice nonetheless some difference on both the very left and very right side of the image.
+
+####2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
+
+Correctly creating the binary image from the input frame is the very first step of the whole pipeline that will lead us to detect the lane. For this reason, I found that is also one of the most important. If the binary image is bad, it's very difficult to recover and to obtain good results in the successive steps of the pipeline. The code related to this part can be found [here](./binarization_utils.py).
+
+I used a combination of color and gradient thresholds to generate a binary image. In order to detect the white lines, I found that [equalizing the histogram](http://docs.opencv.org/3.1.0/d5/daf/tutorial_py_histogram_equalization.html) of the input frame before thresholding works really well to highlight the actual lane lines. For the yellow lines, I employed a threshold on V channel in [HSV](http://docs.opencv.org/3.2.0/df/d9d/tutorial_py_colorspaces.html) color space. Furthermore, I also convolve the input frame with Sobel kernel to get an estimate of the gradients of the lines. Finally, I make use of [morphological closure](http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_morphological_ops/py_morphological_ops.html) to *fill the gaps* in my binary image. Here I show every substep and the final output:
+<p align="center">
+  <img src="./img/binarization.png" alt="binarization overview" width="90%" height="90%">
+</p>
 
 ####3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+Code relating to warping between the two perspective can be found [here](./perspective_utils.py). The function `calibration_utils.birdeye()` takes as input the frame (either color or binary) and returns the bird's-eye view of the scene. In order to perform the perspective warping, we need to map 4 points in the original space and 4 points in the warped space. For this purpose, both source and destination points are *hardcoded* (ok, I said it) as follows:
 
 ```
-src = np.float32(
-    [[(img_size[0] / 2) - 55, img_size[1] / 2 + 100],
-    [((img_size[0] / 6) - 10), img_size[1]],
-    [(img_size[0] * 5 / 6) + 60, img_size[1]],
-    [(img_size[0] / 2 + 55), img_size[1] / 2 + 100]])
-dst = np.float32(
-    [[(img_size[0] / 4), 0],
-    [(img_size[0] / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), 0]])
+    h, w = img.shape[:2]
+
+    src = np.float32([[w, h-10],    # br
+                      [0, h-10],    # bl
+                      [546, 460],   # tl
+                      [732, 460]])  # tr
+    dst = np.float32([[w, h],       # br
+                      [0, h],       # bl
+                      [0, 0],       # tl
+                      [w, 0]])      # tr
 
 ```
-This resulted in the following source and destination points:
-
-| Source        | Destination   | 
-|:-------------:|:-------------:| 
-| 585, 460      | 320, 0        | 
-| 203, 720      | 320, 720      |
-| 1127, 720     | 960, 720      |
-| 695, 460      | 960, 0        |
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-![alt text][image4]
+<p align="center">
+  <img src="./img/perspective_output.png" alt="birdeye_view" width="90%" height="90%">
+</p>
 
 ####4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
