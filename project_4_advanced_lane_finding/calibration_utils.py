@@ -49,15 +49,15 @@ def calibrate_camera(calib_images_dir, verbose=False):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Find the chessboard corners
-        patter_found, corners = cv2.findChessboardCorners(gray, (9, 6), None)
+        pattern_found, corners = cv2.findChessboardCorners(gray, (9, 6), None)
 
-        if patter_found is True:
+        if pattern_found is True:
             objpoints.append(objp)
             imgpoints.append(corners)
 
             if verbose:
                 # Draw and display the corners
-                img = cv2.drawChessboardCorners(img, (9, 6), corners, patter_found)
+                img = cv2.drawChessboardCorners(img, (9, 6), corners, pattern_found)
                 cv2.imshow('img',img)
                 cv2.waitKey(500)
 
