@@ -10,7 +10,9 @@ from globals import ym_per_pix, xm_per_pix
 
 
 class Line:
-
+    """
+    Class to model a lane-line.
+    """
     def __init__(self, buffer_len=10):
 
         # flag to mark if the line was detected the last iteration
@@ -31,7 +33,15 @@ class Line:
         self.all_y = None
 
     def update_line(self, new_fit_pixel, new_fit_meter, detected, clear_buffer=False):
+        """
+        Update Line with new fitted coefficients.
 
+        :param new_fit_pixel: new polynomial coefficients (pixel)
+        :param new_fit_meter: new polynomial coefficients (meter)
+        :param detected: if the Line was detected or inferred
+        :param clear_buffer: if True, reset state
+        :return: None
+        """
         self.detected = detected
 
         if clear_buffer:
@@ -45,7 +55,9 @@ class Line:
         self.recent_fits_meter.append(self.last_fit_meter)
 
     def draw(self, mask, color=(255, 0, 0), line_width=50, average=False):
-
+        """
+        Draw the line on a color mask image.
+        """
         h, w, c = mask.shape
 
         plot_y = np.linspace(0, h - 1, h)
@@ -84,7 +96,16 @@ class Line:
 
 
 def get_fits_by_sliding_windows(birdeye_binary, line_lt, line_rt, n_windows=9, verbose=False):
+    """
+    Get polynomial coefficients for lane-lines detected in an binary image.
 
+    :param birdeye_binary: input bird's eye view binary image
+    :param line_lt: left lane-line previously detected
+    :param line_rt: left lane-line previously detected
+    :param n_windows: number of sliding windows used to search for the lines
+    :param verbose: if True, display intermediate output
+    :return: updated lane lines and output image
+    """
     height, width = birdeye_binary.shape
 
     # Assuming you have created a warped binary image called "binary_warped"
@@ -201,6 +222,16 @@ def get_fits_by_sliding_windows(birdeye_binary, line_lt, line_rt, n_windows=9, v
 
 
 def get_fits_by_previous_fits(birdeye_binary, line_lt, line_rt, verbose=False):
+    """
+    Get polynomial coefficients for lane-lines detected in an binary image.
+    This function starts from previously detected lane-lines to speed-up the search of lane-lines in the current frame.
+
+    :param birdeye_binary: input bird's eye view binary image
+    :param line_lt: left lane-line previously detected
+    :param line_rt: left lane-line previously detected
+    :param verbose: if True, display intermediate output
+    :return: updated lane lines and output image
+    """
 
     height, width = birdeye_binary.shape
 
@@ -281,9 +312,17 @@ def get_fits_by_previous_fits(birdeye_binary, line_lt, line_rt, verbose=False):
     return line_lt, line_rt, img_fit
 
 
-def draw_back_onto_the_road(img_undistorted, birdeye_binary, Minv, line_lt, line_rt, keep_state):
-
-    height, width = birdeye_binary.shape
+def draw_back_onto_the_road(img_undistorted, Minv, line_lt, line_rt, keep_state):
+    """
+    Draw both the drivable lane area and the detected lane-lines onto the original (undistorted) frame.
+    :param img_undistorted: original undistorted color frame
+    :param Minv: (inverse) perspective transform matrix used to re-project on original frame
+    :param line_lt: left lane-line previously detected
+    :param line_rt: right lane-line previously detected
+    :param keep_state: if True, line state is maintained
+    :return: color blend
+    """
+    height, width, _ = img_undistorted.shape
 
     left_fit = line_lt.average_fit if keep_state else line_lt.last_fit_pixel
     right_fit = line_rt.average_fit if keep_state else line_rt.last_fit_pixel
@@ -337,16 +376,7 @@ if __name__ == '__main__':
 
         line_lt, line_rt, img_out = get_fits_by_sliding_windows(img_birdeye, line_lt, line_rt, n_windows=7, verbose=True)
 
-        # y_eval = 0#img.shape[0]//2
-        # left_curverad = ((1 + (2 * left_fit[0] * y_eval + left_fit[1]) ** 2) ** 1.5) / np.absolute(2 * left_fit[0])
-        # right_curverad = ((1 + (2 * right_fit[0] * y_eval + right_fit[1]) ** 2) ** 1.5) / np.absolute(2 * right_fit[0])
-        # print(left_curverad, right_curverad)
 
-        # left_fit, right_fit = get_fits_by_previous_fits(img_birdeye, left_fit, right_fit, verbose=True)
-
-        # blend = draw_back_onto_the_road(img_undistorted, img_birdeye, Minv, left_fit, right_fit)
-        # plt.imshow(cv2.cvtColor(blend, code=cv2.COLOR_BGR2RGB))
-        # plt.show()
 
 
 

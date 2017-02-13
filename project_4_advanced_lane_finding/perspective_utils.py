@@ -7,7 +7,12 @@ from binarization_utils import binarize
 
 
 def birdeye(img, verbose=False):
-
+    """
+    Apply perspective transform to input frame to get the bird's eye view.
+    :param img: input color frame
+    :param verbose: if True, show the transformation result
+    :return: warped image, and both forward and backward transformation matrices
+    """
     h, w = img.shape[:2]
 
     src = np.float32([[w, h-10],    # br
