@@ -1,4 +1,5 @@
-from functions import *
+from functions_detection import *
+from functions_feat_extraction import extract_features_from_file_list
 import numpy as np
 import time
 from sklearn.preprocessing import StandardScaler
@@ -50,7 +51,7 @@ if __name__ == '__main__':
     # Check the score of the SVC
     print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
 
-    # dump all stuff necessary to avoid re-training
+    # dump all stuff necessary to perform testing in a successive phase
     with open('data/svm_trained.pickle', 'wb') as f:
         pickle.dump(svc, f)
     with open('data/feature_scaler.pickle', 'wb') as f:
