@@ -16,7 +16,7 @@ def draw_labeled_bounding_boxes(img, labeled_frame, num_objects):
         x_min, y_min = np.min(cols), np.min(rows)
         x_max, y_max = np.max(cols), np.max(rows)
 
-        cv2.rectangle(img, (x_min, y_min), (x_max, y_max), color=(0, 0, 255), thickness=6)
+        cv2.rectangle(img, (x_min, y_min), (x_max, y_max), color=(255, 0, 0), thickness=6)
 
     return img
 
@@ -36,7 +36,7 @@ def compute_heatmap_from_detections(frame, hot_windows, threshold=12, verbose=Fa
     # apply threshold + morphological closure to remove noise
     _, heatmap_thresh = cv2.threshold(heatmap, threshold, 255, type=cv2.THRESH_BINARY)
     heatmap_thresh = cv2.morphologyEx(heatmap_thresh, op=cv2.MORPH_CLOSE,
-                                      kernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (13, 13)))
+                                      kernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (13, 13)), iterations=1)
     if verbose:
         f, ax = plt.subplots(1, 3)
         ax[0].imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
