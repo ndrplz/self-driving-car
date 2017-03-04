@@ -10,9 +10,6 @@ The goals / steps of this project are the following:
 * Estimate a bounding box for vehicles detected.
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
-###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
-
----
 
 ### Good old CV: Histogram of Oriented Gradients (HOG)
 
