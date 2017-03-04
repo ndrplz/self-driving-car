@@ -21,11 +21,11 @@ def draw_labeled_bounding_boxes(img, labeled_frame, num_objects):
     return img
 
 
-def compute_heatmap_from_detections(frame, hot_windows, threshold=12, verbose=False):
+def compute_heatmap_from_detections(frame, hot_windows, threshold=5, verbose=False):
 
     h, w, c = frame.shape
 
-    heatmap = np.zeros(shape=(h, w), dtype=np.float32)
+    heatmap = np.zeros(shape=(h, w), dtype=np.uint8)
 
     for bbox in hot_windows:
         # for each bounding box, add heat to the corresponding rectangle in the image
