@@ -3,10 +3,11 @@ import cv2
 from skimage.feature import hog
 
 
-# Define a function to return HOG features and visualization
-def get_hog_features(img, orient, pix_per_cell, cell_per_block,
-                     verbose=False, feature_vec=True):
-    # Call with two outputs if vis==True
+def get_hog_features(img, orient, pix_per_cell, cell_per_block, verbose=False, feature_vec=True):
+    """
+    Return hog features for a given image patch `img`.
+    If `verbose==True`, a visualization of the features is also returned.
+    """
     if verbose:
         features, hog_image = hog(img, orientations=orient,
                                   pixels_per_cell=(pix_per_cell, pix_per_cell),
@@ -14,7 +15,6 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
                                   transform_sqrt=True,
                                   visualise=verbose, feature_vector=feature_vec)
         return features, hog_image
-    # Otherwise call with one output
     else:
         features = hog(img, orientations=orient,
                        pixels_per_cell=(pix_per_cell, pix_per_cell),
@@ -24,37 +24,57 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
         return features
 
 
-# Define a function to compute binned color features
 def bin_spatial(img, size=(32, 32)):
-    # Use cv2.resize().ravel() to create the feature vector
-    features = cv2.resize(img, size).ravel()  # just re
+    """
+    Return binned color features.
+    This is just the resized image, unrolled in a feature vector.
+    """
+    features = cv2.resize(img, size).ravel()
     return features
 
 
-# Define a function to compute color histogram features
 def color_hist(img, nbins=32, bins_range=(0, 256)):
+    """
+    Compute the color histogram features of a given image `img`.
+    Histogram is computed for each channel separately: then histograms are \
+    concatenated and resulting feature vector is returned.
+    """
     # Compute the histogram of the color channels separately
     channel1_hist = np.histogram(img[:, :, 0], bins=nbins, range=bins_range)
     channel2_hist = np.histogram(img[:, :, 1], bins=nbins, range=bins_range)
     channel3_hist = np.histogram(img[:, :, 2], bins=nbins, range=bins_range)
     # Concatenate the histograms into a single feature vector
     hist_features = np.concatenate((channel1_hist[0], channel2_hist[0], channel3_hist[0]))
-    # Return the individual histograms, bin_centers and feature vector
     return hist_features
 
 
-def image_to_features(image, feat_extr_params):
+def image_to_features(image, feat_extraction_params):
+    """
+    Extract and return the feature vector from given image.
 
-    color_space = feat_extr_params['color_space']
-    spatial_size = feat_extr_params['spatial_size']
-    hist_bins = feat_extr_params['hist_bins']
-    orient = feat_extr_params['orient']
-    pix_per_cell = feat_extr_params['pix_per_cell']
-    cell_per_block = feat_extr_params['cell_per_block']
-    hog_channel = feat_extr_params['hog_channel']
-    spatial_feat = feat_extr_params['spatial_feat']
-    hist_feat = feat_extr_params['hist_feat']
-    hog_feat = feat_extr_params['hog_feat']
+    Parameters
+    ----------
+    image : ndarray
+        input image on which perform feature extraction.
+
+    feat_extraction_params : dict
+        dictionary of parameters that control the process of feature extraction.
+
+    Returns
+    -------
+    features : ndarray
+        array of features which describes the input image.
+    """
+    color_space = feat_extraction_params['color_space']
+    spatial_size = feat_extraction_params['spatial_size']
+    hist_bins = feat_extraction_params['hist_bins']
+    orient = feat_extraction_params['orient']
+    pix_per_cell = feat_extraction_params['pix_per_cell']
+    cell_per_block = feat_extraction_params['cell_per_block']
+    hog_channel = feat_extraction_params['hog_channel']
+    spatial_feat = feat_extraction_params['spatial_feat']
+    hist_feat = feat_extraction_params['hist_feat']
+    hog_feat = feat_extraction_params['hog_feat']
 
     image_features = []
 
@@ -78,12 +98,10 @@ def image_to_features(image, feat_extr_params):
         image_features.append(spatial_features)
 
     if hist_feat:
-        # Apply color_hist()
         hist_features = color_hist(feature_image, nbins=hist_bins)
         image_features.append(hist_features)
 
     if hog_feat:
-        # Call get_hog_features() with vis=False, feature_vec=True
         if hog_channel == 'ALL':
             hog_features = []
             for channel in range(feature_image.shape[2]):
@@ -94,16 +112,28 @@ def image_to_features(image, feat_extr_params):
         else:
             hog_features = get_hog_features(feature_image[:, :, hog_channel], orient,
                                             pix_per_cell, cell_per_block, verbose=False, feature_vec=True)
-
-        # Append the new feature vector to the features list
         image_features.append(hog_features)
 
     return np.concatenate(image_features)
 
 
-# Extract features from a list of images
 def extract_features_from_file_list(file_list, feat_extraction_params):
+    """
+    Extract features from a list of images
 
+    Parameters
+    ----------
+    file_list : list
+        list of files path on which feature extraction process must be performed.
+
+    feat_extraction_params : dict
+        dictionary of parameters that control the process of feature extraction.
+
+    Returns
+    -------
+    features : list
+        list of feature array, one for each input file.
+    """
     # Create a list to append feature vectors to
     features = []
 
@@ -121,7 +151,9 @@ def extract_features_from_file_list(file_list, feat_extraction_params):
 
 
 def convert_color(image, dest_colorspace='YCrCb'):
-
+    """
+    Convert image colorspace (wrapper to `cv2.cvtColor` for code readability.
+    """
     if dest_colorspace == 'YCrCb':
         image = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
     elif dest_colorspace == 'YUV':
@@ -134,9 +166,32 @@ def convert_color(image, dest_colorspace='YCrCb'):
     return image
 
 
-# Define a single function that can extract features using hog sub-sampling and make predictions
-def find_cars(image, ystart, ystop, scale, svc, feature_scaler, feat_extr_params):
+def find_cars(image, y_start, y_stop, scale, svc, feature_scaler, feat_extr_params):
+    """
+    Extract features from the input image using hog sub-sampling and make predictions on these.
 
+    Parameters
+    ----------
+    image : ndarray
+        Input image.
+    y_start : int
+        Lower bound of detection area on 'y' axis.
+    y_stop : int
+        Upper bound of detection area on 'y' axis.
+    scale : float
+        Factor used to subsample the image before feature extraction.
+    svc : Classifier
+        Pretrained classifier used to perform prediction of extracted features.
+    feature_scaler : sklearn.preprocessing.StandardScaler
+        StandardScaler used to perform feature scaling at training time.
+    feat_extr_params : dict
+        dictionary of parameters that control the process of feature extraction.
+
+    Returns
+    -------
+    hot_windows : list
+        list of bounding boxes (defined by top-left and bottom-right corners) in which cars have been detected
+    """
     hot_windows = []
 
     resize_h = feat_extr_params['resize_h']
@@ -150,7 +205,7 @@ def find_cars(image, ystart, ystop, scale, svc, feature_scaler, feat_extr_params
 
     draw_img = np.copy(image)
 
-    image_crop = image[ystart:ystop, :, :]
+    image_crop = image[y_start:y_stop, :, :]
     image_crop = convert_color(image_crop, dest_colorspace=color_space)
 
     if scale != 1:
@@ -202,22 +257,20 @@ def find_cars(image, ystart, ystop, scale, svc, feature_scaler, feat_extr_params
             test_features = feature_scaler.transform(
                 np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))
 
-            # test_features = X_scaler.transform(np.hstack((shape_feat, hist_feat)).reshape(1, -1))
-            test_prediction = svc.predict(test_features) # np.dstack([test_features, test_features]).transpose(2, 0, 1)
+            test_prediction = svc.predict(test_features)
 
             if test_prediction == 1:
                 xbox_left = np.int(x_left * scale)
                 ytop_draw = np.int(y_top * scale)
                 win_draw = np.int(window * scale)
-                tl_corner_draw = (xbox_left, ytop_draw + ystart)
-                br_corner_draw = (xbox_left + win_draw, ytop_draw + win_draw + ystart)
+                tl_corner_draw = (xbox_left, ytop_draw + y_start)
+                br_corner_draw = (xbox_left + win_draw, ytop_draw + win_draw + y_start)
 
                 cv2.rectangle(draw_img, tl_corner_draw, br_corner_draw, (0, 0, 255), 6)
 
                 hot_windows.append((tl_corner_draw, br_corner_draw))
 
     return hot_windows
-
 
 
 if __name__ == '__main__':

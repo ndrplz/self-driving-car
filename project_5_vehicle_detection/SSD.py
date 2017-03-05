@@ -712,7 +712,27 @@ def SSD300(input_shape, num_classes=21, pretrained=True):
 
 
 def process_frame_bgr_with_SSD(frame_bgr, ssd_model, bbox_helper, allow_classes=[7], min_confidence=0.2):
+    """
+    Perform detection on one BGR frame and return list of detected objects.
 
+    Parameters
+    ----------
+    frame_bgr : ndarray
+        Input frame give to be processed.
+    ssd_model : Keras Model
+        Pretrained model of SSD network.
+    bbox_helper : BBoxUtility
+        Helper for handling detection results.
+    allow_classes : list, default
+        If present, return only detections that belong to these classes.
+    min_confidence : float, default
+        Only detections whose confidence is greater than min_confidence are returned.
+
+    Returns
+    -------
+    results : list
+        List of detection results [class, confidence, x_min, y_min, x_max, y_max]
+    """
     frame_bgr = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
 
     inputs = []
@@ -723,7 +743,7 @@ def process_frame_bgr_with_SSD(frame_bgr, ssd_model, bbox_helper, allow_classes=
     results = bbox_helper.detection_out(preds, confidence_threshold=min_confidence)
     results = results[0]  # processing one frame, so remove batchsize
 
-    # eventually keep only certain classes
+    # eventually filter results keeping only certain classes
     if allow_classes:
         results = [r for r in results if int(r[0]) in allow_classes]
 
@@ -731,6 +751,9 @@ def process_frame_bgr_with_SSD(frame_bgr, ssd_model, bbox_helper, allow_classes=
 
 
 def show_SSD_results(results, frame, color_palette, thickness=3):
+    """
+    Show results of SSD detector drawing rectangles on the image.
+    """
 
     h, w = frame.shape[:2]
 
@@ -739,7 +762,7 @@ def show_SSD_results(results, frame, color_palette, thickness=3):
         # parse row
         label, confidence, x_min, y_min, x_max, y_max = row
 
-        # convert coordinates back to image space
+        # convert coordinates that belong to range (0, 1) back to image space (h, w)
         x_min = int(round(x_min * w))
         y_min = int(round(y_min * h))
         x_max = int(round(x_max * w))
@@ -749,7 +772,21 @@ def show_SSD_results(results, frame, color_palette, thickness=3):
 
 
 def get_SSD_model():
+    """
+    Get SSD detection network pre-trained on Pascal VOC classes.
 
+    Parameters
+    ----------
+
+    Returns
+    ------
+    ssd_model : Keras Model
+        Pretrained model of SSD network.
+    bbox_helper : BBoxUtility
+        Helper for handling detection results.
+    colors_converted : list
+        Color palette to visualize detection results (21 colors such as Pascal VOC classes)
+    """
     voc_classes = ['Aeroplane', 'Bicycle', 'Bird', 'Boat', 'Bottle',
                    'Bus', 'Car', 'Cat', 'Chair', 'Cow', 'Diningtable',
                    'Dog', 'Horse', 'Motorbike', 'Person', 'Pottedplant',
