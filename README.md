@@ -29,7 +29,7 @@ Hope this might be useful to someone! :-)
     </th>
         <th><p align="center">
            <a href="https://www.youtube.com/watch?v=g5BhDtoheE4"><img src="./project_4_advanced_lane_finding/img/overview.gif"                         alt="Overview" width="60%" height="60%"></a>
-           <br>P4: Advanced Lane Finding
+           <br>P4: Adv. Lane Finding
            <br><a href="./project_4_advanced_lane_finding" name="p4_code">(code)</a>
         </p>
     </th>
@@ -50,6 +50,10 @@ Hope this might be useful to someone! :-)
 #### [P3 - Behavioral Cloning](project_3_behavioral_cloning)
  - **Summary:** Built and trained a convolutional neural network for end-to-end driving in a simulator, using TensorFlow and Keras. Used optimization techniques such as regularization and dropout to generalize the network for driving on multiple tracks.
  - **Keywords:** Deep Learning, Keras, Convolutional Neural Networks
+
+#### [P4 - Advanced Lane Finding](project_4_advanced_lane_finding)
+ - **Summary:** Built an advanced lane-finding algorithm using distortion correction, image rectification, color transforms, and gradient thresholding. Identified lane curvature and vehicle displacement. Overcame environmental challenges such as shadows and pavement changes.
+ - **Keywords:** Computer Vision, OpenCV
  
 <p align="center">
   <img src="https://cdn-images-1.medium.com/max/800/1*dRJ1tz6N3MqO1iCFzlhxZg.jpeg" width="400">
