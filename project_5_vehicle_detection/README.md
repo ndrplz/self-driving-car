@@ -71,20 +71,46 @@ feat_extraction_params = {'resize_h': 64,             # resize image height befo
 
 #### 3. Training the classifier
 
-I trained a linear SVM using...
+Once decided which features to used, we can train a classifier on these. In [`train.py`](train.py) I train a linear SVM for task of binary classification *car* vs *non-car*. First, training data are listed a feature vector is extracted for each image:
+```
+    cars = get_file_list_recursively(root_data_vehicle)
+    notcars = get_file_list_recursively(root_data_non_vehicle)
+
+    car_features = extract_features_from_file_list(cars, feat_extraction_params)
+    notcar_features = extract_features_from_file_list(notcars, feat_extraction_params)
+``` 
+Then, the actual training set is composed as the set of all car and all non-car features (labels are given accordingly). Furthermore, feature vectors are standardize in order to have all the features in a similar range and ease training.
+```
+    feature_scaler = StandardScaler().fit(X)  # per-column scaler
+    scaled_X = feature_scaler.transform(X)
+```
+Now, training the LinearSVM classifier is as easy as:
+```
+    svc = LinearSVC()  # svc = SVC(kernel='rbf')
+    svc.fit(X_train, y_train)
+```
+In order to have an idea of the classifier performance, we can make a prediction on the test set with `svc.score(X_test, y_test)`. Training the SVM with the features explained above took around 10 minutes on my laptop. 
+
+### Sliding Window Search
+
+#### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
+
+in a first phase, I implemented a naive sliding window approach in order to get windows at different scales for the purpose of classification. This is shown in function `compute_windows_multiscale` in [`functions_detection.py`](functions_detection.py). This turned out to be very slow. I utlimately implemented a function to jointly search the region of interest and to classify each window as suggested by the course instructor. The performance boost is due to the fact that HOG features are computed only once for the whole region of interest, then subsampled at different scales in order to have the same effect of a multiscale search, but in a more computationally efficient way. This function is called `find_cars` and implemented in [`functions_feat_extraction.py`](functions_feat_extraction). Of course the *tradeoff* is evident: the more the search scales and the more the overlap between adjacent windows, the less performing is the search from a computational point of view.
+
+#### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
+
+Whole classification pipelin using CV approach is implemented in [`main_hog.py`](main_hog.py). Each test image undergoes through the `process_pipeline` function, which is responsbile for all phases: feature extraction, classification and showing the results.
+
+<p align="center">
+  <img src="./img/pipeline_hog.jpg" alt="hog" height="256">
+  <br>Result of HOG pipeline on one of the test images.
+</p>
+
+In order to optimize the performance of the classifier, I started the training with different configuration of the parameters, and kept the best one. Performing detection at different scales also helped a lot, even if exceeding in this direction can lead to very long computational time for a single image. At the end of this pipeline, the whole processing, from image reading to writing the ouput blend, took about 0.5 second per frame.
 
 ### Computer Vision on Steroids, a.k.a. Deep Learning
 
 #### 1. SSD (*Single Shot Multi-Box Detector*) network
-
-### Sliding Window Search
-
-####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
-
-
-####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
-
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
 
 ---
 
