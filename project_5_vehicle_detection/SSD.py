@@ -711,7 +711,7 @@ def SSD300(input_shape, num_classes=21, pretrained=True):
     return model
 
 
-def process_frame_bgr_with_SSD(frame_bgr, ssd_model, bbox_helper, allow_classes=[7], min_confidence=0.2):
+def process_frame_bgr_with_SSD(frame_bgr, ssd_model, bbox_helper, allow_classes=None, min_confidence=0.2):
     """
     Perform detection on one BGR frame and return list of detected objects.
 

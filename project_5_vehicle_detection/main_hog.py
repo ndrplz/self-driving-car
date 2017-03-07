@@ -8,9 +8,6 @@ from functions_feat_extraction import find_cars
 import time
 import collections
 
-from SSD import process_frame_bgr_with_SSD, get_SSD_model
-ssd_model, bbox_helper, color_palette = get_SSD_model()
-
 time_window = 5
 hot_windows_history = collections.deque(maxlen=time_window)
 
@@ -55,7 +52,6 @@ def process_pipeline(frame, svc, feature_scaler, feat_extraction_params, keep_st
 
     hot_windows = []
 
-    # HOG FEATS
     for subsample in np.arange(1, 3, 0.5):
         hot_windows += find_cars(frame, 400, 600, subsample, svc, feature_scaler, feat_extraction_params)
 

@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 
 
 def draw_labeled_bounding_boxes(img, labeled_frame, num_objects):
+    """
+    Starting from labeled regions, draw enclosing rectangles in the original color frame.
+    """
     # Iterate through all detected cars
     for car_number in range(1, num_objects+1):
 
@@ -22,7 +25,9 @@ def draw_labeled_bounding_boxes(img, labeled_frame, num_objects):
 
 
 def compute_heatmap_from_detections(frame, hot_windows, threshold=5, verbose=False):
-
+    """
+    Compute heatmaps from windows classified as positive, in order to filter false positives.
+    """
     h, w, c = frame.shape
 
     heatmap = np.zeros(shape=(h, w), dtype=np.uint8)
@@ -48,7 +53,9 @@ def compute_heatmap_from_detections(frame, hot_windows, threshold=5, verbose=Fal
 
 
 def compute_windows_multiscale(image, verbose=False):
-
+    """
+    Naive implementation of multiscale window search.
+    """
     h, w, c = image.shape
 
     windows_multiscale = []
@@ -77,11 +84,11 @@ def compute_windows_multiscale(image, verbose=False):
     return np.concatenate(windows_multiscale)
 
 
-# Define a function that takes an image, start and stop positions in both x and y,
-# window size (x and y dimensions), and overlap fraction (for both x and y)
 def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
                  xy_window=(64, 64), xy_overlap=(0.5, 0.5)):
-
+    """
+    Implementation of a sliding window in a region of interest of the image.
+    """
     # If x and/or y start/stop positions not defined, set to image size
     if x_start_stop[0] is None:
         x_start_stop[0] = 0
@@ -108,8 +115,6 @@ def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
     window_list = []
 
     # Loop through finding x and y window positions.
-    # Note: you could vectorize this step, but in practice you'll be considering windows one by one
-    # with your classifier, so looping makes sense
     for i in range(n_y_windows):
         for j in range(n_x_windows):
             # Calculate window position
