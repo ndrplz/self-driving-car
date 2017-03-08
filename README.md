@@ -34,6 +34,15 @@ Hope this might be useful to someone! :-)
         </p>
     </th>
   </tr>
+  <tr>
+      </th>
+        <th><p align="center">
+           <a href="https://www.youtube.com/watch?v=Cd7p5pnP3e0"><img src="./project_5_vehicle_detection/img/overview.gif"                         alt="Overview" width="60%" height="60%"></a>
+           <br>P5: Vehicle Detection
+           <br><a href="./project_5_vehicle_detection" name="p5_code">(code)</a>
+        </p>
+    </th>
+  </tr>
 </table>
 
 
