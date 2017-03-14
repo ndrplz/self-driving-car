@@ -24,10 +24,15 @@ import matplotlib.pyplot as plt
 import os
 from keras.applications.imagenet_utils import preprocess_input
 from keras.preprocessing import image
+from computer_vision_utils.bbox_helper import Rectangle
 
 
 WEIGHTS_URL = 'http://imagelab.ing.unimore.it/files/model_weights/SSD/weights_SSD300.hdf5'
 
+voc_classes = ['Aeroplane', 'Bicycle', 'Bird', 'Boat', 'Bottle',
+               'Bus', 'Car', 'Cat', 'Chair', 'Cow', 'Diningtable',
+               'Dog', 'Horse', 'Motorbike', 'Person', 'Pottedplant',
+               'Sheep', 'Sofa', 'Train', 'Tvmonitor']
 
 class BBoxUtility(object):
     """Utility class to do some stuff with bounding boxes and priors.
@@ -768,7 +773,10 @@ def show_SSD_results(results, frame, color_palette, thickness=3):
         x_max = int(round(x_max * w))
         y_max = int(round(y_max * h))
 
-        cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), color=color_palette[int(label)], thickness=thickness)
+        label_text = voc_classes[int(label)-1]
+        bbox = Rectangle(x_min, y_min, x_max, y_max, label=label_text)
+        bbox.draw(frame, draw_label=True, color=color_palette[int(label)], thickness=thickness)
+        # cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), color=color_palette[int(label)], thickness=thickness)
 
 
 def get_SSD_model():
