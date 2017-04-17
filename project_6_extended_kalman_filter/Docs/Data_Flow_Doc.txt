@@ -1,0 +1,29 @@
+Data Flow:
+1) The measuremennt processor/matlab simulator is generating the FUSION .txt file:
+	"data/obj_pose-laser-radar-synthetic-ukf-input.txt";
+	OR
+	"../matlab_examples/obj_pose-laser-radar-synthetic-ukf-input.txt";
+
+The Input file format is:
+#L(for laser) meas_px meas_py timestamp gt_px gt_py gt_vx gt_vy
+#R(for radar) meas_rho meas_phi meas_rho_dot timestamp gt_px gt_py gt_vx gt_vy
+
+Example:
+R	8.60363	0.0290616	-2.99903	1477010443399637	8.6	0.25	-3.00029	0
+L	8.45	0.25	1477010443349642	8.45	0.25	-3.00027	0
+	
+2) The EKF Algorithm reads form file reads all the lines and generates measurement structures
+3) The MeasurementProcessor() is called with individual measurements (one by one). The results are saved
+(Attention: no file processing routines are used inside MeasurementProcessor() all the file processing routines are in the main function
+So the data read/write is decoupled from the algorithm
+4) The results are saved in an output file:
+"data/obj_pose-laser-radar-ekf-output.txt"
+
+Output file format:
+est_px est_py est_vx est_vy meas_px meas_py gt_px gt_py gt_vx gt_vy
+
+Example:
+4.53271	0.279	-0.842172	53.1339	4.29136	0.215312	2.28434	0.226323
+43.2222	2.65959	0.931181	23.2469	4.29136	0.215312	2.28434	0.226323
+
+ 
