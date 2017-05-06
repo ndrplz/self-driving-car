@@ -51,25 +51,30 @@ void KalmanFilter::Update(const VectorXd &z) {
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
-	//// Recover explicitly status information
+	// Recover explicitly status information
 	float px = x_(0);
 	float py = x_(1);
 	float vx = x_(2);
 	float vy = x_(3);
 
 	// Map predicted state into measurement space
-	double rho     = sqrt(px * px + py * py);
-	double phi	   = atan2(py, px);
-	double rho_dot = (px * vx + py * vy) / std::max(rho, 0.0001);
+	float rho = sqrt(px * px + py * py);
+
+	// Sanity checks to avoid division by zero
+	if (std::abs(rho) < 0.0001) rho = 0.0001;
+	if (std::abs(px)  < 0.0001) px = 0.0001;
+
+	float phi = atan2(py, px);
+	float rho_dot = (px * vx + py * vy) / rho;
+
+	//// Normalize angle
+	//while (phi > M_PI) phi -= 2 * M_PI;
+	//while (phi < M_PI) phi += 2 * M_PI;
 
 	VectorXd z_pred(3);
 	z_pred << rho, phi, rho_dot;
 
 	VectorXd y = z - z_pred;
-
-	// Normalize angle
-	while (y(1) > M_PI) y(1) -= 2 * M_PI;
-	while (y(1) < -M_PI) y(1) += 2 * M_PI;
 
 	UpdateRoutine(y);
 
