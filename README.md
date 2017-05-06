@@ -63,6 +63,11 @@ Hope this might be useful to someone! :-)
  - **Summary:** Built an advanced lane-finding algorithm using distortion correction, image rectification, color transforms, and gradient thresholding. Identified lane curvature and vehicle displacement. Overcame environmental challenges such as shadows and pavement changes.
  - **Keywords:** Computer Vision, OpenCV
  
+#### [P5 - Vehicle Detection and Tracking](project_5_vehicle_detection)
+ - **Summary:** Created a vehicle detection and tracking pipeline with OpenCV, histogram of oriented gradients (HOG), and support vector machines (SVM). Implemented the same pipeline using a deep network to perform detection. Optimized and evaluated the model on video data from a automotive camera taken during highway driving.
+ - **Keywords:** Computer Vision, Deep Learning, OpenCV
+ 
+ 
 <p align="center">
   <img src="https://cdn-images-1.medium.com/max/800/1*dRJ1tz6N3MqO1iCFzlhxZg.jpeg" width="400">
 </p>
