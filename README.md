@@ -41,6 +41,12 @@ Hope this might be useful to someone! :-)
            <br><a href="./project_5_vehicle_detection" name="p5_code">(code)</a>
         </p>
     </th>
+        <th><p align="center">
+           <a href="./project_6_extended_kalman_filter"><img src="./project_6_extended_kalman_filter/img/overview.jpg"                         alt="Overview" width="60%" height="60%"></a>
+           <br>P6: Ext. Kalman Filter
+           <br><a href="./project_6_extended_kalman_filter" name="p6_code">(code)</a>
+        </p>
+    </th>
   </tr>
 </table>
 
