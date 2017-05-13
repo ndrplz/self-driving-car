@@ -33,7 +33,7 @@ public:
   MatrixXd Xsig_pred_;
 
   ///* time when the state is true, in us
-  long long time_us_;
+  long long previous_timestamp_;
 
   ///* Process noise standard deviation longitudinal acceleration in m/s^2
   double std_a_;
@@ -65,6 +65,9 @@ public:
   ///* Augmented state dimension
   int n_aug_;
 
+  ///* Number of sigma points
+  int n_sigma_points_;
+
   ///* Sigma point spreading parameter
   double lambda_;
 
@@ -83,6 +86,9 @@ public:
    * Destructor
    */
   virtual ~UKF();
+
+
+  MatrixXd UKF::ComputeSigmaPoints(double delta_t);
 
   /**
    * ProcessMeasurement
@@ -108,6 +114,12 @@ public:
    * @param meas_package The measurement at k+1
    */
   void UpdateRadar(MeasurementPackage meas_package);
+
+  /**
+  * Helper function to normalize angles in range [-PI, PI]
+  * @param phi angle to be normalized
+  */
+  void normalize_between_minus_PI_and_PI(double& phi);
 };
 
 #endif /* UKF_H */
