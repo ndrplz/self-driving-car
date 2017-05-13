@@ -221,17 +221,16 @@ int main(int argc, char* argv[]) {
 
   // compute the accuracy (RMSE)
   Tools tools;
-  cout << "RMSE" << endl << tools.CalculateRMSE(estimations, ground_truth) << endl;
+  VectorXd rmse = tools.CalculateRMSE(estimations, ground_truth);
+  cout << "Accuracy - RMSE:" << endl << rmse << endl;
 
-  // close files
-  if (out_file_.is_open()) {
-    out_file_.close();
-  }
+  ofstream out_file_accuracy_("accuracy.txt", ofstream::out);
+  out_file_accuracy_ << "Accuracy - RMSE: " << endl << rmse << endl;
 
-  if (in_file_.is_open()) {
-    in_file_.close();
-  }
+  // close open files
+  if (out_file_.is_open())			 out_file_.close();
+  if (in_file_.is_open())			 in_file_.close();
+  if (out_file_accuracy_.is_open())	 out_file_accuracy_.close();
 
-  cout << "Done!" << endl;
   return 0;
 }
