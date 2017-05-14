@@ -88,7 +88,11 @@ public:
   virtual ~UKF();
 
 
-  MatrixXd UKF::ComputeSigmaPoints(double delta_t);
+  /**
+  * ProcessMeasurement
+  * @param delta_t Compute sigma points
+  */
+  MatrixXd ComputeSigmaPoints(double delta_t);
 
   /**
    * ProcessMeasurement
