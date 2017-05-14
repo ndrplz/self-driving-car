@@ -77,6 +77,15 @@ public:
   ///* the current NIS for laser
   double NIS_laser_;
 
+  ///* Sensor's measurement size
+  int n_z_lidar_;
+  int n_z_radar_;
+
+  ///* Measurement covariance matrices
+  MatrixXd R_lidar_;
+  MatrixXd R_radar_;
+
+
   /**
    * Constructor
    */
