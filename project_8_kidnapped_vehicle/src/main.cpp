@@ -16,40 +16,34 @@
 using namespace std;
 
 
-
 int main() {
 	
-	// parameters related to grading.
-	int time_steps_before_lock_required = 100; // number of time steps before accuracy is checked by grader.
-	double max_runtime = 45; // Max allowable runtime to pass [sec]
-	double max_translation_error = 1; // Max allowable translation error to pass [m]
-	double max_yaw_error = 0.05; // Max allowable yaw error [rad]
+	// Parameters related to grading.
+	int time_steps_before_lock_required = 100;	// Number of time steps before accuracy is checked by grader
+	double max_runtime = 45;					// Max allowable runtime to pass [sec]
+	double max_translation_error = 1;			// Max allowable translation error to pass [m]
+	double max_yaw_error = 0.05;				// Max allowable yaw error [rad]
 
-
-
-	// Start timer.
+	// Start timer
 	int start = clock();
 	
-	//Set up parameters here
+	// Set up parameters here
 	double delta_t = 0.1; // Time elapsed between measurements [sec]
 	double sensor_range = 50; // Sensor range [m]
 	
-	/*
-	 * Sigmas - just an estimate, usually comes from uncertainty of sensor, but
-	 * if you used fused data from multiple sensors, it's difficult to find
-	 * these uncertainties directly.
-	 */
-	double sigma_pos [3] = {0.3, 0.3, 0.01}; // GPS measurement uncertainty [x [m], y [m], theta [rad]]
-	double sigma_landmark [2] = {0.3, 0.3}; // Landmark measurement uncertainty [x [m], y [m]]
+	// Sigmas - just an estimate, usually comes from uncertainty of sensor, but if you used fused data
+	// from multiple sensors, it's difficult to find these uncertainties directly.
+	double sigma_pos [3] = {0.3, 0.3, 0.01};	// GPS measurement uncertainty [x [m], y [m], theta [rad]]
+	double sigma_landmark [2] = {0.3, 0.3};		// Landmark measurement uncertainty [x [m], y [m]]
 
-	// noise generation
+	// Noise generation
 	default_random_engine gen;
 	normal_distribution<double> N_x_init(0, sigma_pos[0]);
 	normal_distribution<double> N_y_init(0, sigma_pos[1]);
 	normal_distribution<double> N_theta_init(0, sigma_pos[2]);
 	normal_distribution<double> N_obs_x(0, sigma_landmark[0]);
 	normal_distribution<double> N_obs_y(0, sigma_landmark[1]);
-	double n_x, n_y, n_theta, n_range, n_heading;
+
 	// Read map data
 	Map map;
 	if (!read_map_data("data/map_data.txt", map)) {
@@ -71,14 +65,17 @@ int main() {
 		return -1;
 	}
 	
-	// Run particle filter!
+	// Run particle filter
+	double n_x, n_y, n_theta, n_range, n_heading;
 	int num_time_steps = position_meas.size();
 	ParticleFilter pf;
 	double total_error[3] = {0,0,0};
 	double cum_mean_error[3] = {0,0,0};
 	
 	for (int i = 0; i < num_time_steps; ++i) {
+
 		cout << "Time step: " << i << endl;
+
 		// Read in landmark observations for current time step.
 		ostringstream file;
 		file << "data/observation/observations_" << setfill('0') << setw(6) << i+1 << ".txt";
@@ -99,7 +96,8 @@ int main() {
 			// Predict the vehicle's next state (noiseless).
 			pf.prediction(delta_t, sigma_pos, position_meas[i-1].velocity, position_meas[i-1].yawrate);
 		}
-		// simulate the addition of noise to noiseless observation data.
+
+		// Simulate the addition of noise to noiseless observation data.
 		vector<LandmarkObs> noisy_observations;
 		LandmarkObs obs;
 		for (int j = 0; j < observations.size(); ++j) {
