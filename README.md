@@ -47,6 +47,12 @@ Hope this might be useful to someone! :-)
            <br><a href="./project_6_extended_kalman_filter" name="p6_code">(code)</a>
         </p>
     </th>
+    <th><p align="center">
+           <a href="./project_7_unscented_kalman_filter"><img src="./project_7_unscented_kalman_filter/img/overview.jpg"                         alt="Overview" width="60%" height="60%"></a>
+           <br>P7: Unsc. Kalman Filter
+           <br><a href="./project_7_unscented_kalman_filter" name="p7_code">(code)</a>
+        </p>
+    </th>
   </tr>
 </table>
 
