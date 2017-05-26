@@ -49,24 +49,33 @@ void ParticleFilter::prediction(double delta_t, double sigma_pos[], double veloc
 	for (size_t i = 0; i < num_particles; ++i) {
 		
 		// Gather old values
+		double x_old	 = particles[i].x;
+		double y_old	 = particles[i].y;
 		double theta_old = particles[i].theta;
-		double x_old = particles[i].x;
-		double y_old = particles[i].y;
 
-		// Apply equations of motion model
-		double theta_pred = theta_old + yaw_rate * delta_t;
-		double x_pred = x_old + velocity / yaw_rate * (sin(theta_pred) - sin(theta_old));
-		double y_pred = y_old + velocity / yaw_rate * (cos(theta_old) - cos(theta_pred));
+		double theta_pred, x_pred, y_pred;
 
-		// Initialize distributions for adding noise
+		if (abs(yaw_rate) > 1e-5) {
+			// Apply equations of motion model (turning)
+			theta_pred = theta_old + yaw_rate * delta_t;
+			x_pred	   = x_old + velocity / yaw_rate * (sin(theta_pred) - sin(theta_old));
+			y_pred	   = y_old + velocity / yaw_rate * (cos(theta_old) - cos(theta_pred));
+		} else {
+			// Apply equations of motion model (going straight)
+			theta_pred = theta_old;
+			x_pred	   = x_old + velocity * delta_t * cos(theta_old);
+			y_pred	   = y_old + velocity * delta_t * sin(theta_old);
+		}
+
+		// Initialize normal distributions centered on predicted values
 		default_random_engine gen;
 		normal_distribution<double> dist_x(x_pred, sigma_pos[0]);
 		normal_distribution<double> dist_y(y_pred, sigma_pos[1]);
 		normal_distribution<double> dist_theta(theta_pred, sigma_pos[2]);
 
 		// Update particle with noisy prediction
-		particles[i].x = dist_x(gen);
-		particles[i].y = dist_y(gen);
+		particles[i].x	   = dist_x(gen);
+		particles[i].y	   = dist_y(gen);
 		particles[i].theta = dist_theta(gen);
 
 	}
