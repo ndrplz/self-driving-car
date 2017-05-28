@@ -176,7 +176,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 				}
 			}
 			double obs_prob = (exp(-pow(obs.x - mu_x, 2)) / (2 * M_PI * std_x))	* (exp(-pow(obs.y - mu_y, 2)) / (2 * M_PI * std_y));
-			particle_likelihood *= obs_prob;
+
+			particle_likelihood *= obs_prob + numeric_limits<double>::epsilon();
 		}
 
 		particles[i].weight = particle_likelihood;
@@ -193,10 +194,28 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		particle.weight /= norm_factor;
 }
 
+// Resample particles with replacement with probability proportional to their weight. 
 void ParticleFilter::resample() {
-	// TODO: Resample particles with replacement with probability proportional to their weight. 
-	// NOTE: You may find sigma_pos::discrete_distribution helpful here.
-	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
+
+	vector<double> particle_weights;
+	for (const auto& particle : particles)
+		particle_weights.push_back(particle.weight);
+
+	default_random_engine gen;
+	discrete_distribution<int> weighted_distribution(particle_weights.begin(), particle_weights.end());
+
+	vector<Particle> resampled_particles;
+	for (size_t i = 0; i < num_particles; ++i) {
+		int k = weighted_distribution(gen);
+		resampled_particles.push_back(particles[k]);
+	}
+	
+	particles = resampled_particles;
+
+	// Reset weights for all particles
+	for (auto& particle : particles)
+		particle.weight = 1.0;
+
 
 }
 
