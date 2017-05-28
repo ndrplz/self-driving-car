@@ -16,13 +16,13 @@ using namespace std;
 
 void ParticleFilter::init(double gps_x, double gps_y, double theta, double sigma_pos[]) {
 	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
-	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
+	//   p_x, p_y, theta and their uncertainties from GPS) and all weights to 1. 
 	// Add random Gaussian noise to each particle.
 
 	// Set the number of particles 
 	num_particles = 100;
 
-	// Creates normal (Gaussian) distribution for x, y and theta
+	// Creates normal (Gaussian) distribution for p_x, p_y and theta
 	default_random_engine gen;
 	normal_distribution<double> dist_x(gps_x, sigma_pos[0]);
 	normal_distribution<double> dist_y(gps_y, sigma_pos[1]);
@@ -101,8 +101,55 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
 	//   and the following is a good resource for the actual equation to implement (look at equation 
 	//   3.33. Note that you'll need to switch the minus sign in that equation to a plus to account 
-	//   for the fact that the map's y-axis actually points downwards.)
+	//   for the fact that the map's p_y-axis actually points downwards.)
 	//   http://planning.cs.uiuc.edu/node99.html
+
+	for (size_t i = 0; i < num_particles; ++i) {
+
+		// Gather current particle values 
+		double p_x = particles[i].x;
+		double p_y = particles[i].y;
+		double theta = particles[i].theta;
+		
+		// List all landmarks within sensor range
+		vector<LandmarkObs> predicted_landmarks;
+		for (size_t j = 0; j < map_landmarks.landmark_list.size(); ++j) {
+
+			int l_id   = map_landmarks.landmark_list[j].id_i;
+			double l_x = (double) map_landmarks.landmark_list[j].x_f;
+			double l_y = (double) map_landmarks.landmark_list[j].y_f;
+
+			double d = dist(p_x, p_y, l_x, l_y);
+			if (d < sensor_range) {
+				LandmarkObs l_pred;
+				l_pred.id = l_id;
+				l_pred.x  = l_x;
+				l_pred.y  = l_y;
+				predicted_landmarks.push_back(l_pred);
+			}
+		}
+
+		// List all observations in map coordinates
+		vector<LandmarkObs> observed_landmarks_map_ref;
+		for (size_t j = 0; j < observations.size(); ++j) { 
+
+			// Convert observation from particle(vehicle) to map coordinate system
+			LandmarkObs rototranslated_obs;
+			rototranslated_obs.x = cos(theta) * p_x - sin(theta) * p_y + observations[j].x;
+			rototranslated_obs.y = sin(theta) * p_x + cos(theta) * p_y + observations[j].y;
+
+			observed_landmarks_map_ref.push_back(rototranslated_obs); 
+		}
+
+		// TODO Associate predicted and observed landmarks
+
+		// TODO Compute probability of each observations
+
+		// TODO Compute particle weight
+
+
+	} // end loop for each particle
+
 }
 
 void ParticleFilter::resample() {
