@@ -115,27 +115,32 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   for the fact that the map's p_y-axis actually points downwards.)
 	//   http://planning.cs.uiuc.edu/node99.html
 
+	// Gather std values for readability
+	double std_x = std_landmark[0];
+	double std_y = std_landmark[1];
+
+	// Iterate over all particles
 	for (size_t i = 0; i < num_particles; ++i) {
 
 		// Gather current particle values 
-		double p_x = particles[i].x;
-		double p_y = particles[i].y;
+		double p_x	 = particles[i].x;
+		double p_y	 = particles[i].y;
 		double theta = particles[i].theta;
 		
 		// List all landmarks within sensor range
 		vector<LandmarkObs> predicted_landmarks;
-		for (size_t j = 0; j < map_landmarks.landmark_list.size(); ++j) {
 
-			int l_id   = map_landmarks.landmark_list[j].id_i;
-			double l_x = (double) map_landmarks.landmark_list[j].x_f;
-			double l_y = (double) map_landmarks.landmark_list[j].y_f;
+		for (const auto& map_landmark : map_landmarks.landmark_list) {
+			int l_id   = map_landmark.id_i;
+			double l_x = (double) map_landmark.x_f;
+			double l_y = (double) map_landmark.y_f;
 
 			double d = dist(p_x, p_y, l_x, l_y);
 			if (d < sensor_range) {
 				LandmarkObs l_pred;
 				l_pred.id = l_id;
-				l_pred.x  = l_x;
-				l_pred.y  = l_y;
+				l_pred.x = l_x;
+				l_pred.y = l_y;
 				predicted_landmarks.push_back(l_pred);
 			}
 		}
@@ -152,16 +157,40 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			observed_landmarks_map_ref.push_back(rototranslated_obs); 
 		}
 
-		// Find which observations correspond to which landmarks
+		// Find which observations correspond to which landmarks (associate ids)
 		dataAssociation(predicted_landmarks, observed_landmarks_map_ref);
 
-		// TODO Compute probability of each observations
+		// Compute the likelihood for each particle, that is the probablity of obtaining
+		// current observations being in state (particle_x, particle_y, particle_theta)
+		double particle_likelihood = 1.0;
 
-		// TODO Compute particle weight
+		double mu_x, mu_y;
+		for (const auto& obs : observed_landmarks_map_ref) {
 
+			// Multivariate gaussian is centered on corresponding landmark on map
+			for (const auto& land: predicted_landmarks) {
+				if (obs.id == land.id) {
+					mu_x = land.x;
+					mu_y = land.y;
+					break;
+				}
+			}
+			double obs_prob = (exp(-pow(obs.x - mu_x, 2)) / (2 * M_PI * std_x))	* (exp(-pow(obs.y - mu_y, 2)) / (2 * M_PI * std_y));
+			particle_likelihood *= obs_prob;
+		}
+
+		particles[i].weight = particle_likelihood;
 
 	} // end loop for each particle
 
+	// Compute weight normalization factor
+	double norm_factor = 0.0;
+	for (const auto& particle : particles)
+		norm_factor += particle.weight;
+
+	// Normalize weights s.t. they sum to one
+	for (auto& particle : particles)
+		particle.weight /= norm_factor;
 }
 
 void ParticleFilter::resample() {
