@@ -16,13 +16,13 @@ using namespace std;
 
 void ParticleFilter::init(double gps_x, double gps_y, double theta, double sigma_pos[]) {
 	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
-	//   p_x, p_y, theta and their uncertainties from GPS) and all weights to 1. 
+	//   p_x, p_y, p_theta and their uncertainties from GPS) and all weights to 1. 
 	// Add random Gaussian noise to each particle.
 
 	// Set the number of particles 
 	num_particles = 100;
 
-	// Creates normal (Gaussian) distribution for p_x, p_y and theta
+	// Creates normal (Gaussian) distribution for p_x, p_y and p_theta
 	default_random_engine gen;
 	normal_distribution<double> dist_x(gps_x, sigma_pos[0]);
 	normal_distribution<double> dist_y(gps_y, sigma_pos[1]);
@@ -123,9 +123,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	for (size_t i = 0; i < num_particles; ++i) {
 
 		// Gather current particle values 
-		double p_x	 = particles[i].x;
-		double p_y	 = particles[i].y;
-		double theta = particles[i].theta;
+		double p_x	   = particles[i].x;
+		double p_y	   = particles[i].y;
+		double p_theta = particles[i].theta;
 		
 		// List all landmarks within sensor range
 		vector<LandmarkObs> predicted_landmarks;
@@ -151,8 +151,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 			// Convert observation from particle(vehicle) to map coordinate system
 			LandmarkObs rototranslated_obs;
-			rototranslated_obs.x = cos(theta) * p_x - sin(theta) * p_y + observations[j].x;
-			rototranslated_obs.y = sin(theta) * p_x + cos(theta) * p_y + observations[j].y;
+			rototranslated_obs.x = cos(p_theta) * observations[j].x - sin(p_theta) * observations[j].y + p_x;
+			rototranslated_obs.y = sin(p_theta) * observations[j].x + cos(p_theta) * observations[j].y + p_y;
 
 			observed_landmarks_map_ref.push_back(rototranslated_obs); 
 		}
@@ -215,7 +215,6 @@ void ParticleFilter::resample() {
 	// Reset weights for all particles
 	for (auto& particle : particles)
 		particle.weight = 1.0;
-
 
 }
 
