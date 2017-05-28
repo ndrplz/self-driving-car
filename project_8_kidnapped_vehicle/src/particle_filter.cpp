@@ -41,6 +41,8 @@ void ParticleFilter::init(double gps_x, double gps_y, double theta, double sigma
 		// Add the particle to the particle filter set
 		particles.push_back(p);
 	}
+
+	is_initialized = true;
 }
 
 void ParticleFilter::prediction(double delta_t, double sigma_pos[], double velocity, double yaw_rate) {
