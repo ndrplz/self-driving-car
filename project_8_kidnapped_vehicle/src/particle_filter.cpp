@@ -1,10 +1,3 @@
-/*
- * particle_filter.cpp
- *
- *  Created on: Dec 12, 2016
- *      Author: Tiffany Huang
- */
-
 #include <random>
 #include <algorithm>
 #include <iostream>
@@ -17,13 +10,12 @@ using namespace std;
 // Create only once the default random engine
 static default_random_engine gen;
 
+// Particle filter initialization.
+// Set number of particles and initialize them to first position based on GPS estimate.
 void ParticleFilter::init(double gps_x, double gps_y, double theta, double sigma_pos[]) {
-	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
-	//   p_x, p_y, p_theta and their uncertainties from GPS) and all weights to 1. 
-	// Add random Gaussian noise to each particle.
 
 	// Set the number of particles 
-	num_particles = 15;
+	num_particles = 100;
 
 	// Creates normal (Gaussian) distribution for p_x, p_y and p_theta
 	normal_distribution<double> dist_x(gps_x, sigma_pos[0]);
@@ -47,8 +39,8 @@ void ParticleFilter::init(double gps_x, double gps_y, double theta, double sigma
 	is_initialized = true;
 }
 
+// Move each particle according to bicycle motion model (taking noise into account)
 void ParticleFilter::prediction(double delta_t, double sigma_pos[], double velocity, double yaw_rate) {
-	// TODO: Add measurements to each particle and add random Gaussian noise.
 
 	for (size_t i = 0; i < num_particles; ++i) {
 		
@@ -85,7 +77,7 @@ void ParticleFilter::prediction(double delta_t, double sigma_pos[], double veloc
 
 }
 
-// Finds which observations correspond to which landmarks by using a nearest - neighbors data association
+// Finds which observations correspond to which landmarks by using a nearest-neighbor data association
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
 
 	for (auto& obs : observations) {
@@ -99,22 +91,11 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 			}
 		}
 	}
-
 }
 
+// Update the weight of each particle taking into account current measurements.
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
 		std::vector<LandmarkObs> observations, Map map_landmarks) {
-	// TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
-	//   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
-	// NOTE: The observations are given in the VEHICLE'S coordinate system. Your particles are located
-	//   according to the MAP'S coordinate system. You will need to transform between the two systems.
-	//   Keep in mind that this transformation requires both rotation AND translation (but no scaling).
-	//   The following is a good resource for the theory:
-	//   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
-	//   and the following is a good resource for the actual equation to implement (look at equation 
-	//   3.33. Note that you'll need to switch the minus sign in that equation to a plus to account 
-	//   for the fact that the map's p_y-axis actually points downwards.)
-	//   http://planning.cs.uiuc.edu/node99.html
 
 	// Gather std values for readability
 	double std_x = std_landmark[0];
@@ -168,18 +149,18 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		double mu_x, mu_y;
 		for (const auto& obs : observed_landmarks_map_ref) {
 
-			// Multivariate gaussian is centered on corresponding landmark on map
-			for (const auto& land: predicted_landmarks) {
+			// Find corresponding landmark on map for centering gaussian distribution
+			for (const auto& land: predicted_landmarks)
 				if (obs.id == land.id) {
 					mu_x = land.x;
 					mu_y = land.y;
 					break;
 				}
-			}
-			double obs_prob = (exp(-pow(obs.x - mu_x, 2)) / (2 * M_PI * std_x))	* (exp(-pow(obs.y - mu_y, 2)) / (2 * M_PI * std_y));
-			//double obs_prob = (1 / (2 * M_PI*std_x*std_y)) * exp(-(pow(mu_x - obs.x, 2) / (2 * pow(std_x, 2)) + (pow(mu_y - obs.y, 2) / (2 * pow(std_y, 2)))));
 
-			particle_likelihood *= obs_prob;  
+			double norm_factor = 2 * M_PI * std_x * std_y;
+			double prob = exp( -( pow(obs.x - mu_x, 2) / (2 * std_x * std_x) + pow(obs.y - mu_y, 2) / (2 * std_y * std_y) ) );
+			
+			particle_likelihood *= prob / norm_factor;  
 		}
 
 		particles[i].weight = particle_likelihood;
