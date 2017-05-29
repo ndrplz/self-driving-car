@@ -14,16 +14,18 @@
 
 using namespace std;
 
+// Create only once the default random engine
+static default_random_engine gen;
+
 void ParticleFilter::init(double gps_x, double gps_y, double theta, double sigma_pos[]) {
 	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
 	//   p_x, p_y, p_theta and their uncertainties from GPS) and all weights to 1. 
 	// Add random Gaussian noise to each particle.
 
 	// Set the number of particles 
-	num_particles = 100;
+	num_particles = 15;
 
 	// Creates normal (Gaussian) distribution for p_x, p_y and p_theta
-	default_random_engine gen;
 	normal_distribution<double> dist_x(gps_x, sigma_pos[0]);
 	normal_distribution<double> dist_y(gps_y, sigma_pos[1]);
 	normal_distribution<double> dist_theta(theta, sigma_pos[2]);
@@ -70,7 +72,6 @@ void ParticleFilter::prediction(double delta_t, double sigma_pos[], double veloc
 		}
 
 		// Initialize normal distributions centered on predicted values
-		default_random_engine gen;
 		normal_distribution<double> dist_x(x_pred, sigma_pos[0]);
 		normal_distribution<double> dist_y(y_pred, sigma_pos[1]);
 		normal_distribution<double> dist_theta(theta_pred, sigma_pos[2]);
@@ -176,8 +177,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 				}
 			}
 			double obs_prob = (exp(-pow(obs.x - mu_x, 2)) / (2 * M_PI * std_x))	* (exp(-pow(obs.y - mu_y, 2)) / (2 * M_PI * std_y));
+			//double obs_prob = (1 / (2 * M_PI*std_x*std_y)) * exp(-(pow(mu_x - obs.x, 2) / (2 * pow(std_x, 2)) + (pow(mu_y - obs.y, 2) / (2 * pow(std_y, 2)))));
 
-			particle_likelihood *= obs_prob + numeric_limits<double>::epsilon();
+			particle_likelihood *= obs_prob;  
 		}
 
 		particles[i].weight = particle_likelihood;
@@ -191,7 +193,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 	// Normalize weights s.t. they sum to one
 	for (auto& particle : particles)
-		particle.weight /= norm_factor;
+		particle.weight /= (norm_factor + numeric_limits<double>::epsilon());
 }
 
 // Resample particles with replacement with probability proportional to their weight. 
@@ -201,7 +203,6 @@ void ParticleFilter::resample() {
 	for (const auto& particle : particles)
 		particle_weights.push_back(particle.weight);
 
-	default_random_engine gen;
 	discrete_distribution<int> weighted_distribution(particle_weights.begin(), particle_weights.end());
 
 	vector<Particle> resampled_particles;
