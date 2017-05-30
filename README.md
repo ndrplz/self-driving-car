@@ -53,6 +53,12 @@ Hope this might be useful to someone! :-)
            <br><a href="./project_7_unscented_kalman_filter" name="p7_code">(code)</a>
         </p>
     </th>
+    <th><p align="center">
+           <a href="./project_8_kidnapped_vehicle"><img src="./project_8_kidnapped_vehicle/img/overview.gif"                         alt="Overview" width="60%" height="60%"></a>
+           <br>P8: Kidnapped Vehicle
+           <br><a href="./project_8_kidnapped_vehicle" name="p8_code">(code)</a>
+        </p>
+    </th>
   </tr>
 </table>
 
