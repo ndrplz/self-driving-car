@@ -18,6 +18,9 @@ struct Particle {
 	double y;
 	double theta;
 	double weight;
+	std::vector<int> associations;
+	std::vector<double> sense_x;
+	std::vector<double> sense_y;
 };
 
 
@@ -26,7 +29,7 @@ class ParticleFilter {
 	
 	// Number of particles to draw
 	int num_particles; 
-	
+
 	// Flag, if filter is initialized
 	bool is_initialized;
 	
@@ -92,13 +95,17 @@ public:
 	 *   the new set of particles.
 	 */
 	void resample();
-	
+
 	/*
-	 * write Writes particle positions to a file.
-	 * @param filename File to write particle positions to.
+	 * Set a particles list of associations, along with the associations calculated world x,y coordinates
+	 * This can be a very useful debugging tool to make sure transformations are correct and assocations correctly connected
 	 */
-	void write(std::string filename);
+	Particle SetAssociations(Particle particle, std::vector<int> associations, std::vector<double> sense_x, std::vector<double> sense_y);
 	
+	std::string getAssociations(Particle best);
+	std::string getSenseX(Particle best);
+	std::string getSenseY(Particle best);
+
 	/**
 	 * initialized Returns whether particle filter is initialized yet or not.
 	 */

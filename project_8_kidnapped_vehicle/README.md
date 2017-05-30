@@ -10,37 +10,71 @@ Your robot has been kidnapped and transported to a new location! Luckily it has 
 In this project you will implement a 2 dimensional particle filter in C++. Your particle filter will be given a map and some initial localization information (analogous to what a GPS would provide). At each time step your filter will also get observation and control data. 
 
 ## Running the Code
-Once you have this repository on your machine, `cd` into the repository's root directory and run the following commands from the command line:
+This project involves the Term 2 Simulator which can be downloaded [here](https://github.com/udacity/self-driving-car-sim/releases)
 
-```
-> ./clean.sh
-> ./build.sh
-> ./run.sh
-```
+This repository includes two files that can be used to set up and intall uWebSocketIO for either Linux or Mac systems. For windows you can use either Docker, VMware, or even Windows 10 Bash on Ubuntu to install uWebSocketIO.
 
-> **NOTE**
-> If you get any `command not found` problems, you will have to install 
-> the associated dependencies (for example, 
-> [cmake](https://cmake.org/install/))
+Once the install for uWebSocketIO is complete, the main program can be built and ran by doing the following from the project top directory.
 
-If everything worked you should see something like the following output:
+mkdir build
+cd build
+cmake ..
+make
+./particle_filter
 
-Time step: 2444
-Cumulative mean weighted error: x .1 y .1 yaw .02
-Runtime (sec): 38.187226
-Success! Your particle filter passed!
+Note that the programs that need to be written to accomplish the project are src/particle_filter.cpp, and particle_filter.h
 
-```
-Otherwise you might get
-.
-.
-.
-Time step: 100
-Cumulative mean weighted error: x 39.8926 y 9.60949 yaw 0.198841
-Your x error, 39.8926 is larger than the maximum allowable error, 1
-```
+The program main.cpp has already been filled out, but feel free to modify it.
 
-Your job is to build out the methods in `particle_filter.cpp` until the last line of output says:
+Here is the main protcol that main.cpp uses for uWebSocketIO in communicating with the simulator.
+
+INPUT: values provided by the simulator to the c++ program
+
+// sense noisy position data from the simulator
+
+["sense_x"] 
+
+["sense_y"] 
+
+["sense_theta"] 
+
+// get the previous velocity and yaw rate to predict the particle's transitioned state
+
+["previous_velocity"]
+
+["previous_yawrate"]
+
+// receive noisy observation data from the simulator, in a respective list of x/y values
+
+["sense_observations_x"] 
+
+["sense_observations_y"] 
+
+
+OUTPUT: values provided by the c++ program to the simulator
+
+// best particle values used for calculating the error evaluation
+
+["best_particle_x"]
+
+["best_particle_y"]
+
+["best_particle_theta"] 
+
+//Optional message data used for debugging particle's sensing and associations
+
+// for respective (x,y) sensed positions ID label 
+
+["best_particle_associations"]
+
+// for respective (x,y) sensed positions
+
+["best_particle_sense_x"] <= list of sensed x positions
+
+["best_particle_sense_y"] <= list of sensed y positions
+
+
+Your job is to build out the methods in `particle_filter.cpp` until the simulator output says:
 
 ```
 Success! Your particle filter passed!
@@ -58,14 +92,9 @@ root
 |   run.sh
 |
 |___data
-|   |   control_data.txt
-|   |   gt_data.txt
+|   |   
 |   |   map_data.txt
-|   |
-|   |___observation
-|       |   observations_000001.txt
-|       |   ... 
-|       |   observations_002444.txt
+|   
 |   
 |___src
     |   helper_functions.h
@@ -88,32 +117,18 @@ You can find the inputs to the particle filter in the `data` directory.
 2. y position
 3. landmark id
 
+### All other data the simulator provides, such as observations and controls.
+
 > * Map data provided by 3D Mapping Solutions GmbH.
 
-
-#### Control Data
-`control_data.txt` contains rows of control data. Each row corresponds to the control data for the corresponding time step. The two columns represent
-1. vehicle speed (in meters per second)
-2. vehicle yaw rate (in radians per second)
-
-#### Observation Data
-The `observation` directory includes around 2000 files. Each file is numbered according to the timestep in which that observation takes place. 
-
-These files contain observation data for all "observable" landmarks. Here observable means the landmark is sufficiently close to the vehicle. Each row in these files corresponds to a single landmark. The two columns represent:
-1. x distance to the landmark in meters (right is positive) RELATIVE TO THE VEHICLE. 
-2. y distance to the landmark in meters (forward is positive) RELATIVE TO THE VEHICLE.
-
-> **NOTE**
-> The vehicle's coordinate system is NOT the map coordinate system. Your 
-> code will have to handle this transformation.
-
 ## Success Criteria
-If your particle filter passes the current grading code (you can make sure you have the current version at any time by doing a `git pull`), then you should pass! 
+If your particle filter passes the current grading code in the simulator (you can make sure you have the current version at any time by doing a `git pull`), then you should pass! 
 
-The two things the grading code is looking for are:
+The things the grading code is looking for are:
 
-1. **Accuracy**: your particle filter should localize vehicle position and yaw to within the values specified in the parameters `max_translation_error` (maximum allowed error in x or y) and `max_yaw_error` in `src/main.cpp`.
-2. **Performance**: your particle filter should complete execution within the time specified by `max_runtime` in `src/main.cpp`.
 
+1. **Accuracy**: your particle filter should localize vehicle position and yaw to within the values specified in the parameters `max_translation_error` and `max_yaw_error` in `src/main.cpp`.
+
+2. **Performance**: your particle filter should complete execution within the time of 100 seconds.
 
 

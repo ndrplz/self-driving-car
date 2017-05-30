@@ -1,35 +1,28 @@
-cmake_minimum_required(VERSION 2.8.11)
 project(PARTICLE_FILTER)
 
+cmake_minimum_required (VERSION 3.5)
 
-# Build the particle filter project and solution.
-# Use C++11
-set(SRCS src/main.cpp src/particle_filter.cpp)
-set_source_files_properties(${SRCS} PROPERTIES COMPILE_FLAGS -std=c++0x)
+add_definitions(-std=c++11)
 
-# Create the executable
-add_executable(particle_filter ${SRCS})
+set(CXX_FLAGS "-Wall")
+set(CMAKE_CXX_FLAGS, "${CXX_FLAGS}")
 
-# Use C++11
-#if [ ! -f ./src/particle_filter_sol.cpp]; then
-#	echo "No solution file."
-#else
-#	echo "Solution file exists"
-#fi
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/particle_filter_sol.cpp")
-	set(SRCS src/main.cpp src/particle_filter_sol.cpp)
-	set_source_files_properties(${SRCS} PROPERTIES COMPILE_FLAGS -std=c++0x)
-
-	# Create the executable
-	add_executable(particle_filter_solution ${SRCS})
-endif()
+set(sources src/particle_filter.cpp src/main.cpp)
 
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
+
+include_directories(/usr/local/include)
+include_directories(/usr/local/opt/openssl/include)
+link_directories(/usr/local/lib)
+link_directories(/usr/local/opt/openssl/lib)
+link_directories(/usr/local/Cellar/libuv/1.11.0/lib)
+
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
 
 
+add_executable(particle_filter ${sources})
 
 
-
-
+target_link_libraries(particle_filter z ssl uv uWS)
 
