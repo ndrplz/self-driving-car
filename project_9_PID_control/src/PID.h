@@ -3,44 +3,51 @@
 
 class PID {
 public:
-  /*
-  * Errors
-  */
-  double p_error;
-  double i_error;
-  double d_error;
+    /*
+    * Errors
+    */
+    double error_current_;
+    double error_total_;
+    double error_derivative_;
 
-  /*
-  * Coefficients
-  */ 
-  double Kp;
-  double Ki;
-  double Kd;
+    /*
+    * Coefficients
+    */
+    double Kp_;
+    double Ki_;
+    double Kd_;
 
-  /*
-  * Constructor
-  */
-  PID();
+    /*
+    * Constructor
+    */
+    PID();
 
-  /*
-  * Destructor.
-  */
-  virtual ~PID();
+    /*
+    * Destructor.
+    */
+    virtual ~PID();
 
-  /*
-  * Initialize PID.
-  */
-  void Init(double Kp, double Ki, double Kd);
+    /*
+    * Initialize PID.
+    */
+    void Init(double Kp, double Ki, double Kd);
 
-  /*
-  * Update the PID error variables given cross track error.
-  */
-  void UpdateError(double cte);
+    /*
+    * Update the PID error variables given cross track error.
+    */
+    void UpdateError(double cte);
 
-  /*
-  * Calculate the total PID error.
-  */
-  double TotalError();
+    /*
+    * Calculate the total PID error.
+    */
+    double ErrorIntegral();
+
+    /*
+    * Calculate the error derivative
+    */
+    double ErrorDerivative();
+
+
 };
 
 #endif /* PID_H */
