@@ -1,13 +1,15 @@
 #ifndef PID_H
 #define PID_H
 
+
 class PID {
+
 public:
     /*
     * Errors
     */
-    double error_current_;
-    double error_total_;
+    double error_proportional_;
+    double error_integral_;
     double error_derivative_;
 
     /*
@@ -40,14 +42,7 @@ public:
     /*
     * Calculate the total PID error.
     */
-    double ErrorIntegral();
-
-    /*
-    * Calculate the error derivative
-    */
-    double ErrorDerivative();
-
-
+    double TotalError();
 };
 
 #endif /* PID_H */

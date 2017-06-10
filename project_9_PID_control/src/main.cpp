@@ -33,9 +33,9 @@ int main() {
     uWS::Hub h;
 
     // Set PID gains
-    double k_p = 1;
-    double k_i = 0;
-    double k_d = 1000;
+    double k_p = 0.5;
+    double k_i = 0.0;
+    double k_d = 10.0;
 
     // Initialize PID controller
     PID pid;
@@ -59,23 +59,14 @@ int main() {
 
                     pid.UpdateError(cte);
 
-                    steer_value = - pid.Kp_ * pid.error_current_
-                                  + pid.Kd_ * pid.ErrorDerivative()
-                                  - pid.Ki_ * pid.ErrorIntegral();
-
-                    /*
-                    * TODO: Calcuate steering value here, remember the steering value is
-                    * [-1, 1].
-                    * NOTE: Feel free to play around with the throttle and speed. Maybe use
-                    * another PID controller to control the speed!
-                    */
+                    steer_value = pid.TotalError();
 
                     // DEBUG
                     std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
 
                     json msgJson;
                     msgJson["steering_angle"] = steer_value;
-                    msgJson["throttle"] = 0.3;
+                    msgJson["throttle"] = 0.2;
                     auto msg = "42[\"steer\"," + msgJson.dump() + "]";
                     std::cout << msg << std::endl;
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);

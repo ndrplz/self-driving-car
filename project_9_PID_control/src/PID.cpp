@@ -1,18 +1,18 @@
 #include "PID.h"
 
+
 using namespace std;
 
-/*
-* TODO: Complete the PID class.
-*/
 
 PID::PID() {
-    error_current_    = 0.0;
-    error_derivative_ = 0.0;
-    error_total_      = 0.0;
+    error_proportional_ = 0.0;
+    error_integral_     = 0.0;
+    error_derivative_   = 0.0;
 }
 
+
 PID::~PID() {}
+
 
 void PID::Init(double Kp, double Ki, double Kd) {
     Kp_ = Kp;
@@ -20,17 +20,15 @@ void PID::Init(double Kp, double Ki, double Kd) {
     Kd_ = Kd;
 }
 
+
 void PID::UpdateError(double cte) {
-    error_derivative_ = cte - error_current_;
-    error_total_     += cte;
-    error_current_    = cte;
+    error_integral_     += cte;
+    error_derivative_    = cte - error_proportional_;
+    error_proportional_  = cte;
 }
 
-double PID::ErrorIntegral() {
-    return error_total_;
-}
 
-double PID::ErrorDerivative() {
-    return error_derivative_;
+double PID::TotalError() {
+    return -(Kp_ * error_proportional_ + Ki_ * error_integral_ + Kd_ * error_derivative_);
 }
 
