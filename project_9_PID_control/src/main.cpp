@@ -33,9 +33,9 @@ int main() {
     uWS::Hub h;
 
     // Set PID gains
-    double k_p = 0.5;
-    double k_i = 0.0;
-    double k_d = 10.0;
+    double k_p = 0.1;
+    double k_i = 0.0001;
+    double k_d = 1.0;
 
     // Initialize PID controller
     PID pid;
@@ -66,7 +66,7 @@ int main() {
 
                     json msgJson;
                     msgJson["steering_angle"] = steer_value;
-                    msgJson["throttle"] = 0.3;
+                    msgJson["throttle"] = 0.4;
                     auto msg = "42[\"steer\"," + msgJson.dump() + "]";
                     std::cout << msg << std::endl;
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
