@@ -60,6 +60,14 @@ Hope this might be useful to someone! :-)
         </p>
     </th>
   </tr>
+  <tr>
+    <th><p align="center">
+           <a href="./project_9_PID_control"><img src="./project_9_PID_control/img/overview.gif"                         alt="Overview" width="60%" height="60%"></a>
+           <br>P9: PID Controller
+           <br><a href="./project_9_PID_control" name="p9_code">(code)</a>
+        </p>
+    </th>
+  </tr>
 </table>
 
 
