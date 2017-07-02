@@ -95,7 +95,7 @@ int main() {
                     double v = j[1]["speed"];
 
                     // Rotate and shift such that new reference system is centered on the origin @ 0 degrees
-                    for (int i = 0; i < ptsx.size(); ++i) {
+                    for (size_t i = 0; i < ptsx.size(); ++i) {
                         double shift_x = ptsx[i] - px;
                         double shift_y = ptsy[i] - py;
 
@@ -143,7 +143,6 @@ int main() {
                     double steer_value = vars[0] / angle_norm_factor;
                     double throttle_value = vars[1];
 
-
                     //Display the MPC predicted trajectory
                     vector<double> mpc_x_vals;
                     vector<double> mpc_y_vals;
@@ -164,16 +163,13 @@ int main() {
 
                     auto msg = "42[\"steer\"," + msgJson.dump() + "]";
                     std::cout << msg << std::endl;
-                    
+
                     // Latency
-                    // The purpose is to mimic real driving conditions where
-                    // the car does actuate the commands instantly.
+                    // The purpose is to mimic real driving conditions where the car does actuate
+                    // the commands instantly. Feel free to play around with this value but should
+                    // be to drive around the track with 100ms latency.
                     //
-                    // Feel free to play around with this value but should be to drive
-                    // around the track with 100ms latency.
-                    //
-                    // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE
-                    // SUBMITTING.
+                    // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE SUBMITTING.
                     this_thread::sleep_for(chrono::milliseconds(100));
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
                 }
@@ -186,8 +182,7 @@ int main() {
     });
 
     // We don't need this since we're not using HTTP but if it's removed the
-    // program
-    // doesn't compile :-(
+    // program doesn't compile :-(
     h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data,
                        size_t, size_t) {
         const std::string s = "<h1>Hello world!</h1>";
