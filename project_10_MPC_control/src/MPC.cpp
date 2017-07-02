@@ -24,7 +24,7 @@ const double Lf = 2.67;
 // References values that will be included in objective function
 double ref_cte  = 0;
 double ref_epsi = 0;
-double ref_v    = 100; // 100 is just a proxy to "go fast" :-)
+double ref_v    = 100;
 
 // Indexes on the 1D vector (for readability)
 size_t x_start      = 0;
@@ -52,20 +52,23 @@ public:
 
         fg[0] = 0;
 
+        // Objective term 1: Keep close to reference values
         for (size_t i = 0; i < N; ++i) {
-            fg[0] += 2000 * CppAD::pow(vars[cte_start + i] - ref_cte, 2);
+            fg[0] += 2000 * CppAD::pow(vars[cte_start  + i] - ref_cte,  2);
             fg[0] += 2000 * CppAD::pow(vars[epsi_start + i] - ref_epsi, 2);
-            fg[0] += 1    * CppAD::pow(vars[v_start + i] - ref_v, 2);
+            fg[0] += 100  * CppAD::pow(vars[v_start    + i] - ref_v,    2);
         }
 
+        // Objective term 2:  Avoid to actuate, as much as possible
         for (size_t i = 0; i < N - 1; ++i) {
             fg[0] += 5 * CppAD::pow(vars[delta_start + i], 2);
-            fg[0] += 5 * CppAD::pow(vars[a_start + i], 2);
+            fg[0] += 5 * CppAD::pow(vars[a_start     + i], 2);
         }
 
+        // Objective term 3:  Enforce actuators smoothness in change
         for (size_t i = 0; i < N - 2; ++i) {
             fg[0] += 200 * CppAD::pow(vars[delta_start + i + 1] - vars[delta_start + i], 2);
-            fg[0] += 10  * CppAD::pow(vars[a_start + i + 1] - vars[a_start + i], 2);
+            fg[0] += 10  * CppAD::pow(vars[a_start     + i + 1] - vars[a_start     + i], 2);
         }
 
         // Initial constraints
@@ -79,38 +82,38 @@ public:
         for (size_t i = 0; i < N - 1; ++i) {
 
             // Values at time (t)
-            AD<double> x_0      = vars[x_start + i];
-            AD<double> y_0      = vars[y_start + i];
-            AD<double> psi_0    = vars[psi_start + i];
-            AD<double> v_0      = vars[v_start + i];
-            AD<double> cte_0    = vars[cte_start + i];
+            AD<double> x_0      = vars[x_start    + i];
+            AD<double> y_0      = vars[y_start    + i];
+            AD<double> psi_0    = vars[psi_start  + i];
+            AD<double> v_0      = vars[v_start    + i];
+            AD<double> cte_0    = vars[cte_start  + i];
             AD<double> epsi_0   = vars[epsi_start + i];
 
             // Values at time (t+1)
-            AD<double> x_1      = vars[x_start + i + 1];
-            AD<double> y_1      = vars[y_start + i + 1];
-            AD<double> psi_1    = vars[psi_start + i + 1];
-            AD<double> v_1      = vars[v_start + i + 1];
-            AD<double> cte_1    = vars[cte_start + i + 1];
+            AD<double> x_1      = vars[x_start    + i + 1];
+            AD<double> y_1      = vars[y_start    + i + 1];
+            AD<double> psi_1    = vars[psi_start  + i + 1];
+            AD<double> v_1      = vars[v_start    + i + 1];
+            AD<double> cte_1    = vars[cte_start  + i + 1];
             AD<double> epsi_1   = vars[epsi_start + i + 1];
 
             AD<double> delta_0  = vars[delta_start + i];
-            AD<double> a_0      = vars[a_start + i];
+            AD<double> a_0      = vars[a_start     + i];
 
             AD<double> f_0 = coeffs[0] + \
                              coeffs[1] * x_0 + \
-                             coeffs[2] + x_0 * x_0 + \
+                             coeffs[2] * x_0 * x_0 + \
                              coeffs[3] * x_0 * x_0 * x_0;
 
-            AD<double> psides_0 = CppAD::atan(3*coeffs[3] * x_0 * x_0 + 2 * coeffs[2] * x_0 + coeffs[1]);
+            AD<double> psides_0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x_0 + 3 * coeffs[3] * x_0 * x_0);
 
             // Setup other model constraints
-            fg[2 + x_start + i]     = x_1 - (x_0 + v_0 * CppAD::cos(psi_0) * dt);
-            fg[2 + y_start + i]     = y_1 - (y_0 + v_0 * CppAD::sin(psi_0) * dt);
-            fg[2 + psi_start + i]   = psi_1 - (psi_0 - v_0 * delta_0 / Lf * dt);
-            fg[2 + v_start + i]     = v_1 - (v_0 + a_0 * dt);
-            fg[2 + cte_start + i]   = cte_1 - ((f_0 - y_0) + (v_0 + CppAD::sin(epsi_0) * dt));
-            fg[2 + epsi_start + i]  = epsi_1 - ((psi_0 - psides_0) - v_0 * delta_0 / Lf * dt);
+            fg[2 + x_start + i]     = x_1    - (x_0 + v_0 * CppAD::cos(psi_0) * dt);
+            fg[2 + y_start + i]     = y_1    - (y_0 + v_0 * CppAD::sin(psi_0) * dt);
+            fg[2 + psi_start + i]   = psi_1  - (psi_0 - v_0 * delta_0 / Lf * dt);
+            fg[2 + v_start + i]     = v_1    - (v_0 + a_0 * dt);
+            fg[2 + cte_start + i]   = cte_1  - (f_0 - y_0 + (v_0 + CppAD::sin(epsi_0) * dt));
+            fg[2 + epsi_start + i]  = epsi_1 - (psi_0 - psides_0 - v_0 * delta_0 / Lf * dt);
         }
     }
 };
@@ -156,7 +159,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
         vars_upperbound[i] = numeric_limits<float>::max();
     }
 
-    // Set upper and lower constraints for delta
+    // Set upper and lower constraints for steering
     double max_degree   = 25;
     double max_radians  = max_degree * M_PI / 180;
     for (size_t i = delta_start; i < a_start; ++i) {
@@ -174,7 +177,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
     // Initialize to zero lower and upper limits for the constraints
     Dvector constraints_lowerbound(n_constraints);
     Dvector constraints_upperbound(n_constraints);
-    for (size_t i = 0; i < n_constraints; i++) {
+    for (size_t i = 0; i < n_constraints; ++i) {
         constraints_lowerbound[i] = 0;
         constraints_upperbound[i] = 0;
     }

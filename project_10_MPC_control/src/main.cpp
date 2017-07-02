@@ -99,8 +99,10 @@ int main() {
                         double shift_x = ptsx[i] - px;
                         double shift_y = ptsy[i] - py;
 
-                        ptsx[i] = (shift_x * cos(0 - psi) - shift_y * sin(0 - psi));
-                        ptsy[i] = (shift_x * sin(0 - psi) - shift_y * cos(0 - psi));
+                        ptsx[i] = shift_x*cos(psi) + shift_y*sin(psi);
+                        ptsy[i] = -shift_x*sin(psi) + shift_y*cos(psi);
+//                        ptsx[i] = (shift_x * cos(0 - psi) - shift_y * sin(0 - psi));
+//                        ptsy[i] = (shift_x * sin(0 - psi) - shift_y * cos(0 - psi));
                     }
 
                     // Convert to Eigen::VectorXd
@@ -124,7 +126,6 @@ int main() {
                     auto vars = mpc.Solve(state, coeffs);
 
                     // Display the waypoints / reference line
-                    // Helps for visual debugging
                     vector<double> next_x_vals;
                     vector<double> next_y_vals;
 
@@ -138,9 +139,9 @@ int main() {
                     }
 
                     // Normalize steering angle range [-deg2rad(25), deg2rad(25] -> [-1, 1].
-                    double Lf = 2.67;
-                    double angle_norm_factor = deg2rad(25) * Lf;
-                    double steer_value = vars[0] / angle_norm_factor;
+                    const double Lf = 2.67;
+                    const double angle_norm_factor = deg2rad(25) * Lf;
+                    double steer_value = - vars[0] / angle_norm_factor;
                     double throttle_value = vars[1];
 
                     //Display the MPC predicted trajectory
@@ -149,17 +150,17 @@ int main() {
 
                     for (size_t i = 2; i < vars.size(); ++i) {
                         if (i % 2 == 0) mpc_x_vals.push_back(vars[i]);
-                        else mpc_y_vals.push_back(vars[i]);
+                        else            mpc_y_vals.push_back(vars[i]);
                     }
 
                     // Compose message for simulator client
                     json msgJson;
-                    msgJson["steering_angle"] = steer_value;
-                    msgJson["throttle"] = throttle_value;
-                    msgJson["mpc_x"] = mpc_x_vals;
-                    msgJson["mpc_y"] = mpc_y_vals;
-                    msgJson["next_x"] = next_x_vals;
-                    msgJson["next_y"] = next_y_vals;
+                    msgJson["steering_angle"]   = steer_value;
+                    msgJson["throttle"]         = throttle_value;
+                    msgJson["mpc_x"]            = mpc_x_vals;
+                    msgJson["mpc_y"]            = mpc_y_vals;
+                    msgJson["next_x"]           = next_x_vals;
+                    msgJson["next_y"]           = next_y_vals;
 
                     auto msg = "42[\"steer\"," + msgJson.dump() + "]";
                     std::cout << msg << std::endl;
