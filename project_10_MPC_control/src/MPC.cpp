@@ -147,7 +147,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
     // Initial all of independent variables to zero.
     Dvector vars(n_vars);
     for (size_t i = 0; i < n_vars; i++) {
-        vars[i] = 0;
+        vars[i] = 0.0;
     }
 
     Dvector vars_lowerbound(n_vars);

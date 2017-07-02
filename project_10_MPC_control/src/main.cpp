@@ -96,13 +96,12 @@ int main() {
 
                     // Rotate and shift such that new reference system is centered on the origin @ 0 degrees
                     for (size_t i = 0; i < ptsx.size(); ++i) {
+
                         double shift_x = ptsx[i] - px;
                         double shift_y = ptsy[i] - py;
 
-                        ptsx[i] = shift_x*cos(psi) + shift_y*sin(psi);
-                        ptsy[i] = -shift_x*sin(psi) + shift_y*cos(psi);
-//                        ptsx[i] = (shift_x * cos(0 - psi) - shift_y * sin(0 - psi));
-//                        ptsy[i] = (shift_x * sin(0 - psi) - shift_y * cos(0 - psi));
+                        ptsx[i] = shift_x * cos(-psi) - shift_y * sin(-psi);
+                        ptsy[i] = shift_x * sin(-psi) + shift_y * cos(-psi);
                     }
 
                     // Convert to Eigen::VectorXd
