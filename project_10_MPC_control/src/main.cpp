@@ -1,9 +1,6 @@
 #include <math.h>
 #include <uWS/uWS.h>
-#include <chrono>
-#include <iostream>
 #include <thread>
-#include <vector>
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 #include "MPC.h"
@@ -16,8 +13,6 @@ using json = nlohmann::json;
 constexpr double pi() { return M_PI; }
 
 double deg2rad(double x) { return x * pi() / 180; }
-
-double rad2deg(double x) { return x * 180 / pi(); }
 
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
@@ -93,6 +88,8 @@ int main() {
                     double py = j[1]["y"];
                     double psi = j[1]["psi"];
                     double v = j[1]["speed"];
+                    double delta = j[1]["steering_angle"];
+                    double a = j[1]["throttle"];
 
                     // Rotate and shift such that new reference system is centered on the origin @ 0 degrees
                     for (size_t i = 0; i < ptsx.size(); ++i) {
@@ -117,11 +114,26 @@ int main() {
                     double cte = polyeval(coeffs, 0);
 
                     // before reference system change: double epsi = psi - atan(coeffs[1] + 2*px*coeffs[2] + 3*coeffs[3] * pow(px,2));
-                    double epsi = psi - atan(coeffs[1] + 2*px*coeffs[2] + 3*coeffs[3] * pow(px,2));
-//                    double epsi = -atan(coeffs[1]);
+                    //double epsi = psi - atan(coeffs[1] + 2*px*coeffs[2] + 3*coeffs[3] * pow(px,2));
+                    double epsi = -atan(coeffs[1]);
 
+                    // Latency for predicting time at actuation
+                    const double dt = 0.1;
+
+                    const double Lf = 2.67;
+
+                    // Predict future state (take latency into account)
+                    // x, y and psi are all zero in the new reference system
+                    double pred_px = 0.0 + v * dt; // Since psi is zero, cos(0) = 1, can leave out
+                    const double pred_py = 0.0; // Since sin(0) = 0, y stays as 0 (y + v * 0 * dt)
+                    double pred_psi = 0.0 + v * -delta / Lf * dt;
+                    double pred_v = v + a * dt;
+                    double pred_cte = cte + v * sin(epsi) * dt;
+                    double pred_epsi = epsi + v * -delta / Lf * dt;
+
+                    // Feed in the predicted state values
                     Eigen::VectorXd state(6);
-                    state << 0, 0, 0, v, cte, epsi;
+                    state << pred_px, pred_py, pred_psi, pred_v, pred_cte, pred_epsi;
 
                     auto vars = mpc.Solve(state, coeffs);
 
@@ -139,9 +151,9 @@ int main() {
                     }
 
                     // Normalize steering angle range [-deg2rad(25), deg2rad(25] -> [-1, 1].
-                    const double Lf = 2.67;
+
                     const double angle_norm_factor = deg2rad(25) * Lf;
-                    double steer_value = - vars[0] / angle_norm_factor;
+                    double steer_value = vars[0] / angle_norm_factor;
                     double throttle_value = vars[1];
 
                     //Display the MPC predicted trajectory
@@ -170,7 +182,7 @@ int main() {
                     // the commands instantly. Feel free to play around with this value but should
                     // be to drive around the track with 100ms latency.
                     // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE SUBMITTING.
-                    this_thread::sleep_for(chrono::milliseconds(0));
+                    this_thread::sleep_for(chrono::milliseconds(100));
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
                 }
             } else {

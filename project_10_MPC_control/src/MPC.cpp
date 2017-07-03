@@ -23,7 +23,7 @@ const double Lf = 2.67;
 // References values that will be included in objective function
 double ref_cte  = 0;
 double ref_epsi = 0;
-double ref_v    = 50;
+double ref_v    = 60;
 
 // Indexes on the 1D vector (for readability)
 size_t x_start      = 0;
