@@ -117,7 +117,8 @@ int main() {
                     double cte = polyeval(coeffs, 0);
 
                     // before reference system change: double epsi = psi - atan(coeffs[1] + 2*px*coeffs[2] + 3*coeffs[3] * pow(px,2));
-                    double epsi = -atan(coeffs[1]);
+                    double epsi = psi - atan(coeffs[1] + 2*px*coeffs[2] + 3*coeffs[3] * pow(px,2));
+//                    double epsi = -atan(coeffs[1]);
 
                     Eigen::VectorXd state(6);
                     state << 0, 0, 0, v, cte, epsi;
@@ -169,7 +170,7 @@ int main() {
                     // the commands instantly. Feel free to play around with this value but should
                     // be to drive around the track with 100ms latency.
                     // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE SUBMITTING.
-                    this_thread::sleep_for(chrono::milliseconds(100));
+                    this_thread::sleep_for(chrono::milliseconds(0));
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
                 }
             } else {
