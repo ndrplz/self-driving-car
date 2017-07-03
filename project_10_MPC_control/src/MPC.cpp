@@ -197,7 +197,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
     constraints_lower_bounds[cte_start] = cte;    constraints_upper_bounds[cte_start] = cte;
     constraints_lower_bounds[epsi_start] = epsi;  constraints_upper_bounds[epsi_start] = epsi;
 
-    // object that computes objective and constraints
+    // Object that computes objective and constraints
     FG_eval fg_eval(coeffs);
 
     //
@@ -239,9 +239,9 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
     result.push_back(solution.x[a_start]);
 
     // Add "future" solutions (where MPC is going)
-    for (size_t i = 0; i < N - 1; ++i) {
-        result.push_back(solution.x[x_start + i + 1]);
-        result.push_back(solution.x[y_start + i + 1]);
+    for (size_t i = 0; i < N; ++i) {
+        result.push_back(solution.x[x_start + i]);
+        result.push_back(solution.x[y_start + i]);
     }
 
     return result;
