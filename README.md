@@ -62,7 +62,7 @@ Hope this might be useful to someone! :-)
   </tr>
   <tr>
     <th><p align="center">
-           <a href="./project_9_PID_control"><img src="./project_9_PID_control/img/overview.gif"                         alt="Overview" width="60%" height="60%"></a>
+           <a href="https://www.youtube.com/watch?v=w9CETKuJcVM"><img src="./project_9_PID_control/img/overview.gif"                         alt="Overview" width="60%" height="60%"></a>
            <br>P9: PID Controller
            <br><a href="./project_9_PID_control" name="p9_code">(code)</a>
         </p>
