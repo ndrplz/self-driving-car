@@ -67,6 +67,12 @@ Hope this might be useful to someone! :-)
            <br><a href="./project_9_PID_control" name="p9_code">(code)</a>
         </p>
     </th>
+    <th><p align="center">
+           <a href="./project_10_MPC_control"><img src="./project_10_MPC_control/img/overview.gif"                         alt="Overview" width="60%" height="60%"></a>
+           <br>P10: MPC Controller
+           <br><a href="./project_10_MPC_control" name="p10_code">(code)</a>
+        </p>
+    </th>
   </tr>
 </table>
 
