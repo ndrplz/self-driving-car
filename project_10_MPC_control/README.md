@@ -40,6 +40,13 @@ Both ***N*** and ***dt*** are fundamental parameters in the optimization process
 
 In the current project I empirically set (by visually inspecting the vehicle's behavior in the simulator) these parameters to be ***N=10*** and ***dt=0.1***, for a total of ***T=1s*** in the future. 
 
+### Changing Reference System
+
+Simulator provides coordinates in global reference system. In order to ease later computation, these are converted into car's own reference system at lines 94-102 in [main.cpp](https://github.com/ndrplz/self-driving-car/blob/master/project_10_MPC_control/src/main.cpp).
+
+### Dealing with Latency
+
+To mimic real driving conditions where the car does actuate the commands instantly, a *100ms* latency delay has been introduced before sending the data message to the simulator (line 185 in [main.cpp](https://github.com/ndrplz/self-driving-car/blob/master/project_10_MPC_control/src/main.cpp)). In order to deal with latency, state is predicted one time step ahead before feeding it to the solver (lines 125-132 in [main.cpp](https://github.com/ndrplz/self-driving-car/blob/master/project_10_MPC_control/src/main.cpp)).
 
 ---
 
