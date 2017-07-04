@@ -5,6 +5,8 @@ Self-Driving Car Engineer Nanodegree Program
 
 ## Project Description
 
+### Overview
+
 **Model predictive control (MPC)** is an advanced method of process control which relies on dynamic models of the process.
 Differently from previously implemented [PID controller](https://github.com/ndrplz/self-driving-car/tree/master/project_9_PID_control), MPC controller has the ability to anticipate future events and can take control actions accordingly. Indeed, future time steps are taking into account while optimizing current time slot.
 
@@ -28,6 +30,17 @@ The MPC controller framework consists in four main components:
  - **Cost Function** on whose optimization is based the whole control process. Usually cost function is made of the sum of different terms. Besides the main terms that depends on reference values (*e.g.* cross-track or heading error), other regularization terms are present to enforce the smoothness in the controller response (*e.g.* avoid abrupt steering).
  
    In this project the cost function is implemented at lines 54-79 in [MPC.cpp](https://github.com/ndrplz/self-driving-car/blob/master/project_10_MPC_control/src/MPC.cpp).
+   
+### Tuning Trajectory Parameters
+
+Both ***N*** and ***dt*** are fundamental parameters in the optimization process. In particular, ***T = N * dt*** constitutes the *prediction horizon* considered during optimization. These values have to be tuned keeping in mind a couple of things:
+  - large *dt* result in less frequent actuations, which in turn could result in the difficulty in following a continuous reference trajectory (so called *discretization error*) 
+  - despite the fact that having a large *T* could benefit the control process, consider that predicting too far in the future does not make sense in real-world scenarios.
+  - large *T* and small *dt* lead to large *N*. As mentioned above, the number of variables optimized is directly proportional to *N*, so will lead to an higher computational cost.
+
+In the current project I empirically set (by visually inspecting the vehicle's behavior in the simulator) these parameters to be ***N=10*** and ***dt=0.1***, for a total of ***T=1s*** in the future. 
+
+
 ---
 
 ## Dependencies
