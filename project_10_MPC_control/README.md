@@ -19,7 +19,15 @@ The MPC controller framework consists in four main components:
    - **cte** cross-track error
    - **epsi** orientation error
    
-   Vehicle model update equations are implemented at lines 117-123 in [MPC.cpp](https://github.com/ndrplz/self-driving-car/blob/master/project_10_MPC_control/src/MPC.cpp)
+   Vehicle model update equations are implemented at lines 117-123 in [MPC.cpp](https://github.com/ndrplz/self-driving-car/blob/master/project_10_MPC_control/src/MPC.cpp).
+   
+ - **Contraints** necessary to model contrants in actuators' respose. For instance, a vehicle will never be able to steer 90 deegrees in a single time step. In this project we set these constraints as follows:
+   - **steering**: bounded in range [-25°, 25°]
+   - **acceleration**: bounded in range [-1, 1] from full brake to full throttle
+   
+ - **Cost Function** on whose optimization is based the whole control process. Usually cost function is made of the sum of different terms. Besides the main terms that depends on reference values (*e.g.* cross-track or heading error), other regularization terms are present to enforce the smoothness in the controller response (*e.g.* avoid abrupt steering).
+ 
+   In this project the cost function is implemented at lines 54-79 in [MPC.cpp](https://github.com/ndrplz/self-driving-car/blob/master/project_10_MPC_control/src/MPC.cpp).
 ---
 
 ## Dependencies
