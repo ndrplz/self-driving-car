@@ -3,6 +3,16 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 
+## Project Description
+
+**Model predictive control (MPC)** is an advanced method of process control which relies on dynamic models of the process.
+Differently from previously implemented [PID controller](https://github.com/ndrplz/self-driving-car/tree/master/project_9_PID_control), MPC controller has the ability to anticipate future events and can take control actions accordingly. Indeed, future time steps are taking into account while optimizing current time slot.
+
+The MPC controller framework consists in four main components:
+ - **Trajectory** taken in consideration during optimization. This is parametrized by a number of time steps ***N*** spaced out by a time ***dt***. Clearly, the number of variables optimized is directly proportional to *N*, so this must be considered in case there are computational constraints.
+
+---
+
 ## Dependencies
 
 * cmake >= 3.5
