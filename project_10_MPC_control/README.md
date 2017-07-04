@@ -10,7 +10,16 @@ Differently from previously implemented [PID controller](https://github.com/ndrp
 
 The MPC controller framework consists in four main components:
  - **Trajectory** taken in consideration during optimization. This is parametrized by a number of time steps ***N*** spaced out by a time ***dt***. Clearly, the number of variables optimized is directly proportional to *N*, so this must be considered in case there are computational constraints.
-
+ 
+ - **Vehicle Model**, which is the set of equations that describes system behavior and updates across time steps. In our case, we used a simplified kinematic model (so called *bycicle model*) described by a state of six parameters:
+   - **x** car position (*x-axis*)
+   - **y** car position (*y-axis*)
+   - **psi** car's heading direction
+   - **v** car's velocity
+   - **cte** cross-track error
+   - **epsi** orientation error
+   
+   Vehicle model update equations are implemented at lines 117-123 in [MPC.cpp](https://github.com/ndrplz/self-driving-car/blob/master/project_10_MPC_control/src/MPC.cpp)
 ---
 
 ## Dependencies
