@@ -124,12 +124,12 @@ int main() {
 
                     // Predict future state (take latency into account)
                     // x, y and psi are all zero in the new reference system
-                    double pred_px = 0.0 + v * dt; // Since psi is zero, cos(0) = 1, can leave out
-                    const double pred_py = 0.0; // Since sin(0) = 0, y stays as 0 (y + v * 0 * dt)
-                    double pred_psi = 0.0 + v * -delta / Lf * dt;
-                    double pred_v = v + a * dt;
-                    double pred_cte = cte + v * sin(epsi) * dt;
-                    double pred_epsi = epsi + v * -delta / Lf * dt;
+                    double pred_px        = 0.0 + v * dt;               // psi is zero, cos(0) = 1, can leave out
+                    const double pred_py  = 0.0;                        // sin(0) = 0, y stays as 0 (y + v * 0 * dt)
+                    double pred_psi       = 0.0 + v * -delta / Lf * dt;
+                    double pred_v         = v + a * dt;
+                    double pred_cte       = cte + v * sin(epsi) * dt;
+                    double pred_epsi      = epsi + v * -delta / Lf * dt;
 
                     // Feed in the predicted state values
                     Eigen::VectorXd state(6);
