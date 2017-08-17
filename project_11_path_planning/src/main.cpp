@@ -7,7 +7,6 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
 #include "spline.h"
-#include "utils.h"
 #include "coords_transform.h"
 
 
@@ -34,7 +33,7 @@ string hasData(string s) {
 int main() {
   uWS::Hub h;
 
-  // Load up map values for waypoint's x,y,s and d normalized normal vectors
+  // Load up map values for waypoint's `x`, `y`, `s` and `d` normalized normal vectors
   vector<double> map_waypoints_x;
   vector<double> map_waypoints_y;
   vector<double> map_waypoints_s;
@@ -43,6 +42,7 @@ int main() {
 
   // Waypoint map to read from
   string map_file_ = "../data/highway_map.csv";
+
   // The max s value before wrapping around the track back to 0
   double max_s = 6945.554;
 
@@ -93,22 +93,23 @@ int main() {
         if (event == "telemetry") {
           // j[1] is the data JSON object
           
-        	// Main car's localization Data
-          	double car_x = j[1]["x"];
-          	double car_y = j[1]["y"];
-          	double car_s = j[1]["s"];
-          	double car_d = j[1]["d"];
-          	double car_yaw = j[1]["yaw"];
+        	// Main car's localization data
+          	double car_x	 = j[1]["x"];
+          	double car_y	 = j[1]["y"];
+          	double car_s	 = j[1]["s"];
+          	double car_d	 = j[1]["d"];
+          	double car_yaw	 = j[1]["yaw"];
           	double car_speed = j[1]["speed"];
 
           	// Previous path data given to the Planner
           	auto previous_path_x = j[1]["previous_path_x"];
           	auto previous_path_y = j[1]["previous_path_y"];
-          	// Previous path's end s and d values 
+
+          	// Previous path's end `s` and `d` values 
           	double end_path_s = j[1]["end_path_s"];
           	double end_path_d = j[1]["end_path_d"];
 
-          	// Sensor Fusion Data, a list of all other cars on the same side of the road.
+          	// Sensor Fusion data - a list of all other cars on the same side of the road.
           	auto sensor_fusion = j[1]["sensor_fusion"];
 			
 			int prev_size = previous_path_x.size();
@@ -122,17 +123,19 @@ int main() {
 
 				// Check if the `i_th` car is on our lane
 				double d = sensor_fusion[i][6];
-				if (d < (2 + 4 * lane + 2) && d >(2 + 4 * lane - 2)) {
+				bool is_in_our_lane = (d > lane_width * lane) && (d < lane_width * lane + lane_width);
+				if (is_in_our_lane) {
 					double vx = sensor_fusion[i][3];
 					double vy = sensor_fusion[i][4];
 					double check_speed = sqrt(vx * vx + vy * vy);  // speed module
 					double check_car_s = sensor_fusion[i][5];
+					check_car_s += (double)prev_size * 0.02 * check_speed; // use previous points to project s value outward
 
-					// use previous points to project s value outward
-					check_car_s += (double)prev_size * 0.02 * check_speed;
+					bool is_in_front_of_us			  = check_car_s > car_s;
+					bool is_closer_than_safety_margin = check_car_s - car_s < safety_margin;
 
-					if (check_car_s > car_s && (check_car_s - car_s) < 30) {
-						// add the logic here, for example either decrease speed or prepare for lane change
+					if (is_in_front_of_us && is_closer_than_safety_margin) {
+						// add the logic here, e.g. either decrease speed or prepare for lane change
 						too_close = true;
 						if (lane > 0)
 							lane = 0;
@@ -141,12 +144,12 @@ int main() {
 			}
 
 			if (too_close)
-				ref_vel -= 0.224; // around 5 m/s^2
-			else if (ref_vel < 49.5)
+				ref_vel -= 0.224;					// deceleration around 5 m/s^2
+			else if (ref_vel < max_safe_speed)
 				ref_vel += 0.224;
 
-			// List of widely spaced (x, y) waypoints. These will be later interpolated with a spline,
-			// filling it with more points which control speed.
+			// List of widely spaced (x, y) waypoints. These will be later interpolated
+			// with a spline, filling it with more points which control speed.
 			vector<double> pts_x;
 			vector<double> pts_y;
 
@@ -177,9 +180,9 @@ int main() {
 			}
 
 			// In Frenet coordinates, add evenly 30m spaced points ahead of the starting reference
-			vector<double> next_wp0 = frenet_to_cartesian(car_s + 30, (2 + 4 * lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-			vector<double> next_wp1 = frenet_to_cartesian(car_s + 60, (2 + 4 * lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-			vector<double> next_wp2 = frenet_to_cartesian(car_s + 90, (2 + 4 * lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+			vector<double> next_wp0 = frenet_to_cartesian(car_s + 30, (lane_width * lane + lane_width / 2), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+			vector<double> next_wp1 = frenet_to_cartesian(car_s + 60, (lane_width * lane + lane_width / 2), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+			vector<double> next_wp2 = frenet_to_cartesian(car_s + 90, (lane_width * lane + lane_width / 2), map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
 			pts_x.push_back(next_wp0[0]); pts_x.push_back(next_wp1[0]); pts_x.push_back(next_wp2[0]);
 			pts_y.push_back(next_wp0[1]); pts_y.push_back(next_wp1[1]); pts_y.push_back(next_wp2[1]);
@@ -235,15 +238,12 @@ int main() {
 				next_y_vals.push_back(y_point);
 			}
 
+			// Prepare message and send it to the simulator
           	json msgJson;
           	msgJson["next_x"] = next_x_vals;
           	msgJson["next_y"] = next_y_vals;
-
           	auto msg = "42[\"control\","+ msgJson.dump()+"]";
-
-          	//this_thread::sleep_for(chrono::milliseconds(1000));
           	ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
-          
         }
       } else {
         // Manual driving
@@ -254,8 +254,7 @@ int main() {
   });
 
   // We don't need this since we're not using HTTP but if it's removed the
-  // program
-  // doesn't compile :-(
+  // program doesn't compile :-(
   h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data,
                      size_t, size_t) {
     const std::string s = "<h1>Hello world!</h1>";
