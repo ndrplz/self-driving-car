@@ -116,54 +116,65 @@ int main() {
 			if (prev_size > 0)
 				car_s = end_path_s;
 
-			bool is_too_close		= false;
-			bool is_left_lane_free	= true;
-			bool is_right_lane_free = true;
+			bool is_too_close			 = false;
+			bool prepare_for_lane_change = false;
+			bool ready_for_lane_change   = false;
+			bool is_left_lane_free		 = true;
+			bool is_right_lane_free		 = true;
 
 			for (size_t i = 0; i < sensor_fusion.size(); ++i) {
 
-				// Check if the `i_th` car is on our lane
 				Vehicle vehicle(sensor_fusion[i]);
 
 				if (is_in_lane(vehicle.d, lane)) {
 
 					vehicle.s += (double)prev_size * 0.02 * vehicle.speed; // use previous points to project s value onward
 
-					bool is_in_front_of_us			  = vehicle.s > car_s;
+					bool is_in_front_of_us = vehicle.s > car_s;
 					bool is_closer_than_safety_margin = vehicle.s - car_s < safety_margin;
 
 					if (is_in_front_of_us && is_closer_than_safety_margin) {
-
 						is_too_close = true;
-
-						// Check if left and right lanes are free 
-						for (size_t i = 0; i < sensor_fusion.size(); ++i) {
-							Vehicle vehicle(sensor_fusion[i]);
-							// Check left lane
-							if (is_in_lane(vehicle.d, lane - 1)) {	
-								vehicle.s += (double)prev_size * 0.02 * vehicle.speed;
-								bool too_close_to_change = (vehicle.s > car_s - safety_margin / 2) && (vehicle.s < car_s + safety_margin / 2);
-								if (too_close_to_change)
-									is_left_lane_free = false;
-							}
-							// Check right lane 
-							else if (is_in_lane(vehicle.d, lane + 1)) {	
-								vehicle.s += (double)prev_size * 0.02 * vehicle.speed;
-								bool too_close_to_change = (vehicle.s > car_s - safety_margin / 2) && (vehicle.s < car_s + safety_margin / 2);
-								if (too_close_to_change)
-									is_right_lane_free = false;
-							}
-						}
-
-						// Actually perform lane change
-						if (lane > 0 && is_left_lane_free)
-							lane -= 1;
-						else if (lane < 2 && is_right_lane_free)
-							lane += 1;
+						prepare_for_lane_change = true;
 					}
 				}
 			}
 
+			if (prepare_for_lane_change) {
+				int num_vehicles_left  = 0;
+				int num_vehicles_right = 0;
+				// Check if left and right lanes are free 
+				for (size_t i = 0; i < sensor_fusion.size(); ++i) {
+					Vehicle vehicle(sensor_fusion[i]);
+					// Check left lane
+					if (is_in_lane(vehicle.d, lane - 1)) {
+						++num_vehicles_left;
+						vehicle.s += (double)prev_size * 0.02 * vehicle.speed;
+						bool too_close_to_change = (vehicle.s > car_s - safety_margin / 2) && (vehicle.s < car_s + safety_margin / 2);
+						if (too_close_to_change)
+							is_left_lane_free = false;
+					}
+					// Check right lane 
+					else if (is_in_lane(vehicle.d, lane + 1)) {
+						++num_vehicles_right;
+						vehicle.s += (double)prev_size * 0.02 * vehicle.speed;
+						bool too_close_to_change = (vehicle.s > car_s - safety_margin / 2) && (vehicle.s < car_s + safety_margin / 2);
+						if (too_close_to_change)
+							is_right_lane_free = false;
+					}
+
+					if (is_left_lane_free || is_right_lane_free)
+						ready_for_lane_change = true;
+				}
+				cout << "LEFT " << num_vehicles_left << "RIGHT " << num_vehicles_right << endl;
+			}
+
+			// Actually perform lane change
+			if (ready_for_lane_change && is_left_lane_free && lane > 0)
+				lane -= 1;
+			else if (ready_for_lane_change && is_right_lane_free && lane < 2)
+				lane += 1;
+					
 			// Eventually slow down if too close the car before
 			if (is_too_close)
 				ref_vel -= 0.224;					// deceleration around 5 m/s^2
