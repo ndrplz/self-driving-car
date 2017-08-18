@@ -5,7 +5,6 @@
 #include <thread>
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
-#include "json.hpp"
 #include "spline.h"
 #include "coords_transform.h"
 
@@ -86,7 +85,7 @@ int main() {
       auto s = hasData(data);
 
       if (s != "") {
-        auto j = json::parse(s);
+        json j = json::parse(s);
         
         string event = j[0].get<string>();
         
@@ -117,33 +116,56 @@ int main() {
 			if (prev_size > 0)
 				car_s = end_path_s;
 
-			bool too_close = false;
+			bool is_too_close		= false;
+			bool is_left_lane_free	= true;
+			bool is_right_lane_free = true;
 
 			for (size_t i = 0; i < sensor_fusion.size(); ++i) {
 
 				// Check if the `i_th` car is on our lane
-				double d = sensor_fusion[i][6];
-				bool is_in_our_lane = (d > lane_width * lane) && (d < lane_width * lane + lane_width);
-				if (is_in_our_lane) {
-					double vx = sensor_fusion[i][3];
-					double vy = sensor_fusion[i][4];
-					double check_speed = sqrt(vx * vx + vy * vy);  // speed module
-					double check_car_s = sensor_fusion[i][5];
-					check_car_s += (double)prev_size * 0.02 * check_speed; // use previous points to project s value outward
+				Vehicle vehicle(sensor_fusion[i]);
 
-					bool is_in_front_of_us			  = check_car_s > car_s;
-					bool is_closer_than_safety_margin = check_car_s - car_s < safety_margin;
+				if (is_in_lane(vehicle.d, lane)) {
+
+					vehicle.s += (double)prev_size * 0.02 * vehicle.speed; // use previous points to project s value onward
+
+					bool is_in_front_of_us			  = vehicle.s > car_s;
+					bool is_closer_than_safety_margin = vehicle.s - car_s < safety_margin;
 
 					if (is_in_front_of_us && is_closer_than_safety_margin) {
-						// add the logic here, e.g. either decrease speed or prepare for lane change
-						too_close = true;
-						if (lane > 0)
-							lane = 0;
+
+						is_too_close = true;
+
+						// Check if left and right lanes are free 
+						for (size_t i = 0; i < sensor_fusion.size(); ++i) {
+							Vehicle vehicle(sensor_fusion[i]);
+							// Check left lane
+							if (is_in_lane(vehicle.d, lane - 1)) {	
+								vehicle.s += (double)prev_size * 0.02 * vehicle.speed;
+								bool too_close_to_change = (vehicle.s > car_s - safety_margin / 2) && (vehicle.s < car_s + safety_margin / 2);
+								if (too_close_to_change)
+									is_left_lane_free = false;
+							}
+							// Check right lane 
+							else if (is_in_lane(vehicle.d, lane + 1)) {	
+								vehicle.s += (double)prev_size * 0.02 * vehicle.speed;
+								bool too_close_to_change = (vehicle.s > car_s - safety_margin / 2) && (vehicle.s < car_s + safety_margin / 2);
+								if (too_close_to_change)
+									is_right_lane_free = false;
+							}
+						}
+
+						// Actually perform lane change
+						if (lane > 0 && is_left_lane_free)
+							lane -= 1;
+						else if (lane < 2 && is_right_lane_free)
+							lane += 1;
 					}
 				}
 			}
 
-			if (too_close)
+			// Eventually slow down if too close the car before
+			if (is_too_close)
 				ref_vel -= 0.224;					// deceleration around 5 m/s^2
 			else if (ref_vel < max_safe_speed)
 				ref_vel += 0.224;
