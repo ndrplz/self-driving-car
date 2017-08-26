@@ -40,6 +40,8 @@ Here's a bullet list of rubric points along with an explanation of how constrain
     
     For the task of lane keeping we'll rely on *Frenet coordinates*, which measure longitudinal (s) and lateral (d) motion along the road and are much easier to deal with w.r.t. euclidean ones. By the way, the code for converting between Eunclidean and Frenet coordinates is in [`coords_transform.h`](https://github.com/ndrplz/self-driving-car/blob/master/project_11_path_planning/src/coords_transform.h).
     
-    In order for the car to keep the lane, [three future waypoints are generated equally spaced 30m, 60m and 90m before the car](https://github.com/ndrplz/self-driving-car/blob/50adb2c54ac2e0d5c0878f4c3c73894275ab20c3/project_11_path_planning/src/main.cpp#L215-L218) respectively. These are quite far apart one from the other, so in order to obtain a smooth trajectory a spline is used to interpolate intermediate locations.
+    In order for the car to keep the lane, [three future waypoints are generated equally spaced 30m, 60m and 90m before the car](https://github.com/ndrplz/self-driving-car/blob/50adb2c54ac2e0d5c0878f4c3c73894275ab20c3/project_11_path_planning/src/main.cpp#L215-L218) respectively. These are quite far apart one from the other, so in order to obtain a smooth trajectory a [spline](https://github.com/ndrplz/self-driving-car/blob/611428a30cc28b958dd38a2b3a837897b2a0c0b7/project_11_path_planning/src/main.cpp#L232-L233) is used to interpolate intermediate locations.
+    
+    Notice that these waypoints are created [using the `lane` variable](https://github.com/ndrplz/self-driving-car/blob/50adb2c54ac2e0d5c0878f4c3c73894275ab20c3/project_11_path_planning/src/main.cpp#L215-L218) to make sure that the `d` coordinate is just in the middle of the lane the car is currently on. In case a lane change is needed, the `lane` variable will already contain the coordinate of the future lane (see below). 
 
 - **The car is able to change lanes**
