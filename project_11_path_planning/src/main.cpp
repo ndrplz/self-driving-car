@@ -244,7 +244,7 @@ int main() {
 
 			// Calculate how to break up spline points to travel at reference velocity
 			double target_x = 30.0;
-			double target_y = s(target_x);
+			double target_y = s(target_y);
 			double target_dist = sqrt(target_x * target_x + target_y * target_y);
 
 			double x_add_on = 0.0;
