@@ -55,21 +55,52 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     :param num_classes: Number of classes to classify
     :return: The Tensor for the last layer of output
     """
-    # TODO: Implement function
-    return None
+
+    kernel_regularizer = None
+
+    # Compute logits
+    layer3_logits = tf.layers.conv2d(vgg_layer3_out, num_classes, kernel_size=[1, 1],
+                                     padding='same', kernel_regularizer=kernel_regularizer)
+    layer4_logits = tf.layers.conv2d(vgg_layer4_out, num_classes, kernel_size=[1, 1],
+                                     padding='same', kernel_regularizer=kernel_regularizer)
+    layer7_logits = tf.layers.conv2d(vgg_layer7_out, num_classes, kernel_size=[1, 1],
+                                     padding='same', kernel_regularizer=kernel_regularizer)
+
+    # Add skip connection before 4th and 7th layer
+    layer7_logits_up   = tf.image.resize_images(layer7_logits, size=[10, 36])
+    layer_4_7_fused = tf.add(layer7_logits_up, layer4_logits)
+
+    # Add skip connection before (4+7)th and 3rd layer
+    layer_4_7_fused_up = tf.image.resize_images(layer_4_7_fused, size=[20, 72])
+    layer_3_4_7_fused = tf.add(layer3_logits, layer_4_7_fused_up)
+
+    # resize to original size
+    layer_3_4_7_up = tf.image.resize_images(layer_3_4_7_fused, size=[160, 576])
+
+    return layer_3_4_7_up
 
 
-def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
+def optimize(net_prediction, labels, learning_rate, num_classes):
     """
     Build the TensorFLow loss and optimizer operations.
-    :param nn_last_layer: TF Tensor of the last layer in the neural network
-    :param correct_label: TF Placeholder for the correct label image
+    :param net_prediction: TF Tensor of the last layer in the neural network
+    :param labels: TF Placeholder for the correct label image
     :param learning_rate: TF Placeholder for the learning rate
     :param num_classes: Number of classes to classify
     :return: Tuple of (logits, train_op, cross_entropy_loss)
     """
-    # TODO: Implement function
-    return None, None, None
+
+    # Unroll
+    logits_flat = tf.reshape(net_prediction, (-1, num_classes))
+    labels_flat = tf.reshape(labels, (-1, num_classes))
+
+    # Define loss
+    cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=labels_flat, logits=logits_flat))
+
+    # Define optimization step
+    train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cross_entropy_loss)
+
+    return logits_flat, train_step, cross_entropy_loss
 
 
 def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_loss, input_image,
@@ -93,16 +124,17 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
 
 def perform_tests():
     tests.test_load_vgg(load_vgg, tf)
-    # tests.test_layers(layers)
-    # tests.test_optimize(optimize)
+    tests.test_layers(layers)
+    tests.test_optimize(optimize)
     # tests.test_train_nn(train_nn)
+    pass
 
 
 def run():
     num_classes = 2
-    image_shape = (160, 576)
-    data_dir = './data'
-    runs_dir = './runs'
+    image_h, image_w = (160, 576)
+    data_dir = '/home/minotauro/code/self-driving-car/project_12_road_segmentation/data'
+    runs_dir = '/home/minotauro/code/self-driving-car/project_12_road_segmentation/runs'
     tests.test_for_kitti_dataset(data_dir)
 
     # Download pretrained vgg model
@@ -118,14 +150,30 @@ def run():
         vgg_path = join(data_dir, 'vgg')
 
         # Create function to get batches
-        get_batches_fn = helper.gen_batch_function(join(data_dir, 'data_road/training'), image_shape)
+        batch_generator = helper.gen_batch_function(join(data_dir, 'data_road/training'), (image_h, image_w))
 
         # OPTIONAL: Augment Images for better results
         #  https://datascience.stackexchange.com/questions/5224/how-to-prepare-augment-images-for-neural-network
 
         # TODO: Build NN using load_vgg, layers, and optimize function
-        image_input, keep_prob, layer3_out, layer4_out, layer7_out = load_vgg(sess, vgg_path)
+        x, y = next(batch_generator(batch_size=1))
 
+        # Load VGG pretrained
+        image_input, keep_prob, vgg_layer3_out, vgg_layer4_out, vgg_layer7_out = load_vgg(sess, vgg_path)
+
+        # Add skip connections
+        output = layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes)
+
+        # Variable initialization
+        sess.run(tf.global_variables_initializer())
+
+        labels = tf.placeholder(tf.float32, shape=[None, image_h, image_w, num_classes])
+        learning_rate = tf.placeholder(tf.float32, shape=[])
+
+        logits, train_op, cross_entropy_loss = optimize(output, labels, learning_rate, num_classes)
+
+        sess.run(output, feed_dict={image_input: x, keep_prob: 1.0})
+        pass
         # TODO: Train NN using the train_nn function
 
         # TODO: Save inference data using helper.save_inference_samples
