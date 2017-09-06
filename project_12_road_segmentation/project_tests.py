@@ -115,9 +115,9 @@ def test_train_nn(train_nn):
     epochs = 1
     batch_size = 2
 
-    def get_batches_fn(batach_size_parm):
-        shape = [batach_size_parm, 2, 3, 3]
-        return np.arange(np.prod(shape)).reshape(shape)
+    def get_batches_fn(batch_size_parm):
+        shape = [batch_size_parm, 2, 3, 3]
+        yield np.arange(np.prod(shape)).reshape(shape)
 
     train_op = tf.constant(0)
     cross_entropy_loss = tf.constant(10.11)
@@ -128,13 +128,13 @@ def test_train_nn(train_nn):
     with tf.Session() as sess:
         parameters = {
             'sess': sess,
-            'epochs': epochs,
+            'training_epochs': epochs,
             'batch_size': batch_size,
             'get_batches_fn': get_batches_fn,
             'train_op': train_op,
             'cross_entropy_loss': cross_entropy_loss,
-            'input_image': input_image,
-            'correct_label': correct_label,
+            'image_input': input_image,
+            'labels': correct_label,
             'keep_prob': keep_prob,
             'learning_rate': learning_rate}
         _prevent_print(train_nn, parameters)
