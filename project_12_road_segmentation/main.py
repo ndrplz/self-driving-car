@@ -1,13 +1,17 @@
-import tensorflow as tf
-import helper
+import os
+import argparse
 import warnings
+import tensorflow as tf
+from helper import gen_batch_function, save_inference_samples
 from distutils.version import LooseVersion
-from os.path import join
+from os.path import join, expanduser
 import project_tests as tests
+from image_augmentation import perform_augmentation
 
 
 # Check TensorFlow Version
-assert LooseVersion(tf.__version__) >= LooseVersion('1.0'), 'Please use TensorFlow version 1.0 or newer.  You are using {}'.format(tf.__version__)
+assert LooseVersion(tf.__version__) >= LooseVersion('1.0'),\
+    'Please use TensorFlow version 1.0 or newer.  You are using {}'.format(tf.__version__)
 print('TensorFlow Version: {}'.format(tf.__version__))
 
 # Check for a GPU
@@ -40,7 +44,7 @@ def load_vgg(sess, vgg_path):
     layer3_out = graph.get_tensor_by_name(vgg_layer3_out_tensor_name)
     layer4_out = graph.get_tensor_by_name(vgg_layer4_out_tensor_name)
     layer7_out = graph.get_tensor_by_name(vgg_layer7_out_tensor_name)
-    
+
     return image_input, keep_prob, layer3_out, layer4_out, layer7_out
 
 
@@ -56,7 +60,7 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     :return: The Tensor for the last layer of output
     """
 
-    kernel_regularizer = None
+    kernel_regularizer = tf.contrib.layers.l2_regularizer(0.5)
 
     # Compute logits
     layer3_logits = tf.layers.conv2d(vgg_layer3_out, num_classes, kernel_size=[1, 1],
@@ -67,7 +71,7 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
                                      padding='same', kernel_regularizer=kernel_regularizer)
 
     # Add skip connection before 4th and 7th layer
-    layer7_logits_up   = tf.image.resize_images(layer7_logits, size=[10, 36])
+    layer7_logits_up = tf.image.resize_images(layer7_logits, size=[10, 36])
     layer_4_7_fused = tf.add(layer7_logits_up, layer4_logits)
 
     # Add skip connection before (4+7)th and 3rd layer
@@ -76,6 +80,8 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
 
     # resize to original size
     layer_3_4_7_up = tf.image.resize_images(layer_3_4_7_fused, size=[160, 576])
+    layer_3_4_7_up = tf.layers.conv2d(layer_3_4_7_up, num_classes, kernel_size=[15, 15],
+                                      padding='same', kernel_regularizer=kernel_regularizer)
 
     return layer_3_4_7_up
 
@@ -122,17 +128,26 @@ def train_nn(sess, training_epochs, batch_size, get_batches_fn, train_op, cross_
     # Variable initialization
     sess.run(tf.global_variables_initializer())
 
-    lr = 1e-4
+    lr = args.learning_rate
 
     for e in range(0, training_epochs):
 
-        # Load a batch of examples
-        batch_x, batch_y = next(get_batches_fn(batch_size))
+        loss_this_epoch = 0.0
 
-        _, cur_loss = sess.run(fetches=[train_op, cross_entropy_loss],
-                               feed_dict={image_input: batch_x, labels: batch_y, keep_prob: 0.5, learning_rate: lr})
+        for i in range(0, args.batches_per_epoch):
 
-        print(cur_loss)
+            # Load a batch of examples
+            batch_x, batch_y = next(get_batches_fn(batch_size))
+            if should_do_augmentation:
+                batch_x, batch_y = perform_augmentation(batch_x, batch_y)
+
+            _, cur_loss = sess.run(fetches=[train_op, cross_entropy_loss],
+                                   feed_dict={image_input: batch_x, labels: batch_y, keep_prob: 0.25,
+                                              learning_rate: lr})
+
+            loss_this_epoch += cur_loss
+
+        print('Epoch: {:02d}  -  Loss: {:.03f}'.format(e, loss_this_epoch / args.batches_per_epoch))
 
 
 def perform_tests():
@@ -149,16 +164,13 @@ def run():
 
     image_h, image_w = (160, 576)
 
-    # Download pretrained vgg model
-    helper.maybe_download_pretrained_vgg(data_dir)
-
     with tf.Session() as sess:
 
         # Path to vgg model
         vgg_path = join(data_dir, 'vgg')
 
         # Create function to get batches
-        batch_generator = helper.gen_batch_function(join(data_dir, 'data_road/training'), (image_h, image_w))
+        batch_generator = gen_batch_function(join(data_dir, 'data_road/training'), (image_h, image_w))
 
         # Load VGG pretrained
         image_input, keep_prob, vgg_layer3_out, vgg_layer4_out, vgg_layer7_out = load_vgg(sess, vgg_path)
@@ -173,21 +185,41 @@ def run():
         logits, train_op, cross_entropy_loss = optimize(output, labels, learning_rate, num_classes)
 
         # Training parameters
-        training_epochs = 100
-        batch_size      = 1
-
-        train_nn(sess, training_epochs, batch_size, batch_generator, train_op, cross_entropy_loss,
+        train_nn(sess, args.training_epochs, args.batch_size, batch_generator, train_op, cross_entropy_loss,
                  image_input, labels, keep_prob, learning_rate)
 
-        # TODO: Save inference data using helper.save_inference_samples
-        #  helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
+        save_inference_samples(runs_dir, data_dir, sess, (image_h, image_w), logits, keep_prob, image_input)
+
+
+def parse_arguments():
+    """
+    Parse command line arguments
+    """
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--batch_size', type=int, default=8, help='Batch size used for training', metavar='')
+    parser.add_argument('--batches_per_epoch', type=int, default=100, help='Batches each training epoch', metavar='')
+    parser.add_argument('--training_epochs', type=int, default=30, help='Number of training epoch', metavar='')
+    parser.add_argument('--learning_rate', type=float, default=1e-4, help='Learning rate', metavar='')
+    parser.add_argument('--augmentation', type=bool, default=True, help='Perform augmentation in training', metavar='')
+    parser.add_argument('--gpu', type=int, default=0, help='Which GPU to use', metavar='')
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
 
-    data_dir = '/home/minotauro/code/self-driving-car/project_12_road_segmentation/data'
-    runs_dir = '/home/minotauro/code/self-driving-car/project_12_road_segmentation/runs'
+    data_dir = join(expanduser("~"), 'code', 'self-driving-car', 'project_12_road_segmentation', 'data')
+    runs_dir = join(expanduser("~"), 'majinbu_home', 'road_segmentation_prediction')
 
+    args = parse_arguments()
+
+    # Appropriately set GPU device
+    os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
+    print('Using GPU: {:02d}.'.format(args.gpu))
+
+    # Turn off augmentation during tests
+    should_do_augmentation = False
     perform_tests()
 
+    # Restore appropriate augmentation value
+    should_do_augmentation = args.augmentation
     run()
