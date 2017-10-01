@@ -73,6 +73,18 @@ Hope this might be useful to someone! :-)
            <br><a href="./project_10_MPC_control" name="p10_code">(code)</a>
         </p>
     </th>
+   <th><p align="center">
+           <a href="./project_11_path_planning"><img src="./project_11_path_planning/img/overview.jpg"                         alt="Overview" width="60%" height="60%"></a>
+           <br>P11: Path Planning
+           <br><a href="./project_11_path_planning" name="p11_code">(code)</a>
+        </p>
+    </th>
+    <th><p align="center">
+          <a href="./project_12_road_segmentation"><img src="./project_12_road_segmentation/img/overview.jpg"                         alt="Overview" width="60%" height="60%"></a>
+           <br>P11: Road Segmentation
+           <br><a href="./project_12_road_segmentation" name="p12_code">(code)</a>
+        </p>
+    </th>
   </tr>
 </table>
 
