@@ -23,11 +23,6 @@ if __name__ == '__main__':
     # Define model
     classifier = TrafficLightClassifier(x, targets, p, n_classes, learning_rate=1e-4)
 
-    # Define metrics
-    correct_predictions = tf.equal(tf.argmax(classifier.inference, axis=1),
-                                   tf.argmax(tf.one_hot(targets, depth=n_classes), axis=1))
-    accuracy = tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
-
     with tf.Session() as sess:
 
         # Initialize all variables
@@ -60,8 +55,8 @@ if __name__ == '__main__':
             num_test_batches = 500
             for _ in range(num_test_batches):
                 x_batch, y_batch = dataset.load_batch(batch_size)
-                average_test_accuracy += sess.run(fetches=accuracy,
+                average_test_accuracy += sess.run(fetches=classifier.accuracy,
                                                   feed_dict={x: x_batch, targets: y_batch, p: 1.})
             average_test_accuracy /= num_test_batches
-            print('TEST accuracy: {:.03f}'.format(average_test_accuracy))
+            print('Training accuracy: {:.03f}'.format(average_test_accuracy))
             print('*' * 50)

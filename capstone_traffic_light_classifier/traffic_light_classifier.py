@@ -19,11 +19,13 @@ class TrafficLightClassifier:
         self._inference     = None
         self._loss          = None
         self._train_step    = None
+        self._accuracy      = None
         self._summaries     = None
 
         self.inference
         self.loss
         self.train_step
+        self.accuracy
         # self.summaries # todo add these
 
     @property
@@ -68,3 +70,12 @@ class TrafficLightClassifier:
             with tf.variable_scope('training'):
                 self._train_step = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(self.loss)
         return self._train_step
+
+    @property
+    def accuracy(self):
+        if self._accuracy is None:
+            with tf.variable_scope('accuracy'):
+                correct_predictions = tf.equal(tf.argmax(self.inference, axis=1),
+                                               tf.argmax(tf.one_hot(self.targets, depth=self.n_classes), axis=1))
+                self._accuracy = tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
+        return self._accuracy
