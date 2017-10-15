@@ -7,13 +7,15 @@ EPS  = np.finfo('float32').eps
 
 class TrafficLightClassifier:
 
-    def __init__(self, x, targets, keep_prob, n_classes, learning_rate):
+    def __init__(self, input_shape, learning_rate):
 
-        self.x         = x
-        self.targets   = targets
-        self.keep_prob = keep_prob
+        # Placeholders
+        input_h, input_w = input_shape
+        self.x = tf.placeholder(dtype=tf.float32, shape=[None, input_h, input_w, 3])  # input placeholder
+        self.targets = tf.placeholder(dtype=tf.int32, shape=[None])
+        self.keep_prob = tf.placeholder(dtype=tf.float32)  # dropout keep probability
 
-        self.n_classes      = n_classes      # {void, red, yellow, green}
+        self.n_classes      = 4              # {void, red, yellow, green}
         self.learning_rate  = learning_rate  # learning rate used in train step
 
         self._inference     = None
@@ -68,7 +70,7 @@ class TrafficLightClassifier:
     def train_step(self):
         if self._train_step is None:
             with tf.variable_scope('training'):
-                self._train_step = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(self.loss)
+                self._train_step = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
         return self._train_step
 
     @property
