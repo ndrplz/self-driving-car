@@ -1,4 +1,5 @@
 import cv2
+import random
 import numpy as np
 from glob import glob
 from os.path import join
@@ -45,8 +46,10 @@ class TrafficLightDataset:
             raise IOError('Please initialize dataset first.')
         np.save(dump_file_path, self.dataset_npy)
 
-    def load_batch(self, batch_size):
-
+    def load_batch(self, batch_size, augmentation=False):
+        """
+        Load a random batch of data from the dataset
+        """
         if not self.initialized:
             raise IOError('Please initialize dataset first.')
 
@@ -64,6 +67,8 @@ class TrafficLightDataset:
             loaded += 1
 
         X_batch = self.preprocess(X_batch)
+        if augmentation:
+            X_batch = self.perform_augmentation(X_batch)
 
         return X_batch, Y_batch
 
@@ -75,6 +80,22 @@ class TrafficLightDataset:
         x = np.float32(x) - np.mean(x)
         x /= x.max()
         return x
+
+    @staticmethod
+    def perform_augmentation(batch):
+        """
+        Perform simple data augmentation on training batch
+        """
+        def coin_flip_is_head():
+            return random.choice([True, False])
+
+        for b in range(batch.shape[0]):
+            if coin_flip_is_head():
+                batch[b] = np.fliplr(batch[b])
+            if coin_flip_is_head():
+                batch[b] = np.flipud(batch[b])
+
+        return batch
 
     @staticmethod
     def infer_label_from_frame_path(path):
@@ -100,3 +121,14 @@ class TrafficLightDataset:
         for (color, num_label) in color2label.items():
             statistics[color] = np.sum(self.dataset_npy[:, 1] == num_label)
         print(statistics)
+
+if __name__ == '__main__':
+    # Init traffic light dataset
+    dataset = TrafficLightDataset()
+    # dataset_root = 'C:/Users/minotauro/Desktop/traffic_light_dataset'
+    # dataset.init_from_files(dataset_root, resize=(input_h, input_w))
+    # dataset.dump_to_npy('traffic_light_dataset.npy')
+    dataset.init_from_npy('traffic_light_dataset.npy')
+
+    # Load a batch of training data
+    x_batch, y_batch = dataset.load_batch(batch_size=16, augmentation=True)

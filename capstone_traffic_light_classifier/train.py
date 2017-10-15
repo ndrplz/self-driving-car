@@ -45,7 +45,7 @@ if __name__ == '__main__':
             for _ in range(batches_each_epoch):
 
                 # Load a batch of training data
-                x_batch, y_batch = dataset.load_batch(batch_size)
+                x_batch, y_batch = dataset.load_batch(batch_size, augmentation=True)
 
                 # Actually run one training step here
                 _, loss_this_batch = sess.run(fetches=[classifier.train_step, classifier.loss],
