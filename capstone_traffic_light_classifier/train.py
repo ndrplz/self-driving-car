@@ -11,7 +11,8 @@ if __name__ == '__main__':
 
     # Init traffic light dataset
     dataset = TrafficLightDataset()
-    # dataset.init_from_files('../traffic_light_dataset', resize=(input_h, input_w))
+    # dataset_root = 'C:/Users/minotauro/Desktop/traffic_light_dataset'
+    # dataset.init_from_files(dataset_root, resize=(input_h, input_w))
     # dataset.dump_to_npy('traffic_light_dataset.npy')
     dataset.init_from_npy('traffic_light_dataset.npy')
 
@@ -23,6 +24,9 @@ if __name__ == '__main__':
     # Define model
     classifier = TrafficLightClassifier(x, targets, p, n_classes, learning_rate=1e-4)
 
+    # Add a saver to save the model after each epoch
+    saver = tf.train.Saver()
+
     with tf.Session() as sess:
 
         # Initialize all variables
@@ -31,6 +35,8 @@ if __name__ == '__main__':
         # Training parameters
         batch_size         = 32
         batches_each_epoch = 1000
+
+        epoch = 0
 
         while True:
 
@@ -60,3 +66,8 @@ if __name__ == '__main__':
             average_test_accuracy /= num_test_batches
             print('Training accuracy: {:.03f}'.format(average_test_accuracy))
             print('*' * 50)
+
+            # Save the variables to disk.
+            save_path = saver.save(sess, './checkpoints/model_epoch_{}.ckpt'.format(epoch))
+
+            epoch += 1
