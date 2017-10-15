@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 from glob import glob
-from tqdm import tqdm
 from os.path import join
 
 
@@ -21,11 +20,13 @@ class TrafficLightDataset:
         self.dataset_npy = []
         frame_list = glob(join(self.root, '*', '*.jpg'))
 
-        for frame_path in tqdm(frame_list, desc='Loading frames'):
+        print('Loading frames...')
+        for frame_path in frame_list:
             frame = cv2.imread(frame_path)
             frame = cv2.resize(frame, resize[::-1])  # cv2 invert rows and cols
             label = self.infer_label_from_frame_path(frame_path)
             self.dataset_npy.append([frame, label])
+        print('Done.')
 
         self.initialized = True
 
