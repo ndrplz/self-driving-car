@@ -10,4 +10,6 @@ The traffic light dataset is modeled in [`traffic_light_dataset.py`](https://git
 
 The deep network architecture is in [`traffic_light_classifier.py`](https://github.com/ndrplz/self-driving-car/blob/master/capstone_traffic_light_classifier/traffic_light_classifier.py)
 
-Training can be started from [`main.py`](https://github.com/ndrplz/self-driving-car/blob/master/capstone_traffic_light_classifier/main.py)
+Training the model: [`train.py`](https://github.com/ndrplz/self-driving-car/blob/master/capstone_traffic_light_classifier/train.py)
+
+Testing the model from pretrained weights: [`test.py`](https://github.com/ndrplz/self-driving-car/blob/master/capstone_traffic_light_classifier/test.py)
