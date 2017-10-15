@@ -91,9 +91,13 @@ class TrafficLightDataset:
 
         for b in range(batch.shape[0]):
             if coin_flip_is_head():
-                batch[b] = np.fliplr(batch[b])
+                batch[b] = np.fliplr(batch[b])    # flip horizontally (mirroring)
             if coin_flip_is_head():
-                batch[b] = np.flipud(batch[b])
+                batch[b] = np.flipud(batch[b])    # flip vertically
+            if coin_flip_is_head():
+                batch[b] = np.rot90(batch[b], 3)  # rotate 90 degree clockwise
+            if coin_flip_is_head():
+                batch[b] = np.rot90(batch[b], 1)  # rotate 90 degree counter-clockwise
 
         return batch
 
