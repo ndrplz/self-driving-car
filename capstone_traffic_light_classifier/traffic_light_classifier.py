@@ -35,12 +35,16 @@ class TrafficLightClassifier:
         if self._inference is None:
             with tf.variable_scope('inference'):
 
+                kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-3)
+
                 conv1_filters = 32
-                conv1 = tf.layers.conv2d(self.x, conv1_filters, kernel_size=(3, 3), padding='same', activation=tf.nn.relu)
+                conv1 = tf.layers.conv2d(self.x, conv1_filters, kernel_size=(3, 3), padding='same',
+                                         activation=tf.nn.relu, kernel_regularizer=kernel_regularizer)
                 pool1 = tf.layers.max_pooling2d(conv1, pool_size=(2, 2), strides=(2, 2), padding='same')
 
                 conv2_filters = 64
-                conv2 = tf.layers.conv2d(pool1, conv2_filters, kernel_size=(3, 3), padding='same', activation=tf.nn.relu)
+                conv2 = tf.layers.conv2d(pool1, conv2_filters, kernel_size=(3, 3), padding='same',
+                                         activation=tf.nn.relu, kernel_regularizer=kernel_regularizer)
                 pool2 = tf.layers.max_pooling2d(conv2, pool_size=(2, 2), strides=(2, 2), padding='same')
 
                 _, h, w, c = pool2.get_shape().as_list()
