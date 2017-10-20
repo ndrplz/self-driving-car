@@ -7,7 +7,7 @@ EPS  = np.finfo('float32').eps
 
 class TrafficLightClassifier:
 
-    def __init__(self, input_shape, learning_rate):
+    def __init__(self, input_shape, learning_rate, verbose=True):
 
         # Placeholders
         input_h, input_w = input_shape
@@ -29,6 +29,9 @@ class TrafficLightClassifier:
         self.train_step
         self.accuracy
         # self.summaries # todo add these
+
+        if verbose:
+            self.print_summary()
 
     @property
     def inference(self):
@@ -85,3 +88,16 @@ class TrafficLightClassifier:
                                                tf.argmax(tf.one_hot(self.targets, depth=self.n_classes), axis=1))
                 self._accuracy = tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
         return self._accuracy
+
+    @staticmethod
+    def print_summary():
+        def pretty_border():
+            print('*' * 50)
+
+        pretty_border()
+        print('Classifier initialized.')
+
+        trainable_variables  = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+        num_trainable_params = np.sum([np.prod(v.get_shape()) for v in trainable_variables])
+        print('Number of trainable parameters: {}'.format(num_trainable_params))
+        pretty_border()
