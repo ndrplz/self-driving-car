@@ -72,6 +72,21 @@ class TrafficLightDataset:
 
         return X_batch, Y_batch
 
+    def print_statistics(self):
+        """
+        Print simple statistics on the number of samples in the dataset. 
+        :return: 
+        """
+        if not self.initialized:
+            raise IOError('Please initialize dataset first.')
+
+        color2label = {'none': 0, 'red': 1, 'yellow': 2, 'green': 3}
+
+        statistics = {}
+        for (color, num_label) in color2label.items():
+            statistics[color] = np.sum(self.dataset_npy[:, 1] == num_label)
+        print(statistics)
+
     @staticmethod
     def preprocess(x):
         """
@@ -113,26 +128,3 @@ class TrafficLightDataset:
         elif 'green' in path:
             label = 3
         return label
-
-    def print_statistics(self):
-
-        if not self.initialized:
-            raise IOError('Please initialize dataset first.')
-
-        color2label = {'none': 0, 'red': 1, 'yellow': 2, 'green': 3}
-
-        statistics = {}
-        for (color, num_label) in color2label.items():
-            statistics[color] = np.sum(self.dataset_npy[:, 1] == num_label)
-        print(statistics)
-
-if __name__ == '__main__':
-    # Init traffic light dataset
-    dataset = TrafficLightDataset()
-    # dataset_root = 'C:/Users/minotauro/Desktop/traffic_light_dataset'
-    # dataset.init_from_files(dataset_root, resize=(input_h, input_w))
-    # dataset.dump_to_npy('traffic_light_dataset.npy')
-    dataset.init_from_npy('traffic_light_dataset.npy')
-
-    # Load a batch of training data
-    x_batch, y_batch = dataset.load_batch(batch_size=16, augmentation=True)

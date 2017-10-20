@@ -8,21 +8,19 @@ from traffic_light_classifier import TrafficLightClassifier
 if __name__ == '__main__':
 
     # Parameters
-    input_h, input_w = 64, 64    # Shape to which input is resized
+    input_h, input_w = 128, 128    # Shape to which input is resized
 
     # Init traffic light dataset
     dataset = TrafficLightDataset()
-    dataset_root = 'C:/Users/minotauro/Google Drive/SHARE/traffic_light_dataset'
-    dataset.init_from_files(dataset_root, resize=(input_h, input_w))
-    dataset.dump_to_npy('traffic_light_dataset.npy')
-    # dataset.init_from_npy('traffic_light_dataset.npy')
+    dataset_file = 'traffic_light_dataset_npy/traffic_light_dataset_mixed_resize_{}.npy'.format(input_h)
+    dataset.init_from_npy(dataset_file)
 
     # Define model
-    classifier = TrafficLightClassifier(input_shape=[input_h, input_w], learning_rate=1e-4)
+    classifier = TrafficLightClassifier(input_shape=[input_h, input_w], learning_rate=1e-4, verbose=True)
 
     # Checkpoint stuff
-    saver = tf.train.Saver()         # saver to save the model after each epoch
-    checkpoint_dir = './checkpoint_2'  # checkpoint directory
+    saver = tf.train.Saver()  # saver to save the model after each epoch
+    checkpoint_dir = './checkpoint_mixed_{}'.format(input_h)  # checkpoint directory
     if not exists(checkpoint_dir):
         makedirs(checkpoint_dir)
 
