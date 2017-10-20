@@ -6,6 +6,8 @@ Hope this might be useful to someone! :-)
 
 ## Overview
 
+### Projects
+
 <table style="width:100%">
   <tr>
     <th>
@@ -88,7 +90,11 @@ Hope this might be useful to someone! :-)
   </tr>
 </table>
 
+### Capstone
+- [**Traffic light classifier:**](https://github.com/ndrplz/self-driving-car/tree/master/capstone_traffic_light_classifier) Simple traffic light classifier to be integrated in the capstone project.
+![simulator_dataset](capstone_traffic_light_classifier/img/simulator_examples.png)
 
+--- 
 ## Table of Contents
 
 #### [P1 - Detecting Lane Lines (basic)](project_1_lane_finding_basic)
