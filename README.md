@@ -83,7 +83,7 @@ Hope this might be useful to someone! :-)
     </th>
     <th><p align="center">
           <a href="./project_12_road_segmentation"><img src="./project_12_road_segmentation/img/overview.jpg"                         alt="Overview" width="60%" height="60%"></a>
-           <br>P11: Road Segmentation
+           <br>P12: Road Segmentation
            <br><a href="./project_12_road_segmentation" name="p12_code">(code)</a>
         </p>
     </th>
