@@ -117,6 +117,13 @@ Hope this might be useful to someone! :-)
  - **Summary:** Created a vehicle detection and tracking pipeline with OpenCV, histogram of oriented gradients (HOG), and support vector machines (SVM). Implemented the same pipeline using a deep network to perform detection. Optimized and evaluated the model on video data from a automotive camera taken during highway driving.
  - **Keywords:** Computer Vision, Deep Learning, OpenCV
  
+ #### [P6 - Extended Kalman Filter](project_6_extended_kalman_filter)
+ - **Summary:** Implement the extended Kalman filter in C++. Simulated lidar and radar measurements are used to detect a bicycle that travels around your vehicle. Kalman filter, lidar measurements and radar measurements are used to track the bicycle's position and velocity.
+ - **Keywords:** C++, Kalman Filter
+
+ #### [P7 - Unscented Kalman Filter](project_7_unscented_kalman_filter)
+ - **Summary:**  Utilize an Unscented Kalman Filter to estimate the state of a moving object of interest with noisy lidar and radar measurements. Kalman filter, lidar measurements and radar measurements are used to track the bicycle's position and velocity.
+ - **Keywords:** C++, Kalman Filter
  
 <p align="center">
   <img src="https://cdn-images-1.medium.com/max/800/1*dRJ1tz6N3MqO1iCFzlhxZg.jpeg" width="400">
