@@ -136,6 +136,16 @@ Hope this might be useful to someone! :-)
 #### [P10 - MPC Control](project_10_MPC_control)
 - **Summary:** Implement an MPC controller for keeping the car on track by appropriately adjusting the steering angle. Differently from previously implemented PID controller, MPC controller has the ability to anticipate future events and can take control actions accordingly. Indeed, future time steps are taking into account while optimizing current time slot.
 - **Keywords:** C++, MPC Controller
+
+#### [P11 - Path Planning](project_11_path_planning)
+- **Summary:** The goal in this project is to build a path planner that is able to create smooth, safe trajectories for the car to follow. The highway track has other vehicles, all going different speeds, but approximately obeying the 50 MPH speed limit. The car transmits its location, along with its sensor fusion data, which estimates the location of all the vehicles on the same side of the road.
+- **Keywords:** C++, Path Planning
+
+#### [P12 - Road Segmentation](project_12_road_segmentation)
+- **Summary:** Implement the road segmentation using a fully-convolutional network.
+- **Keywords:** Python, TensorFlow, Semantic Segmentation
+
+
  
 <p align="center">
   <img src="https://cdn-images-1.medium.com/max/800/1*dRJ1tz6N3MqO1iCFzlhxZg.jpeg" width="400">
