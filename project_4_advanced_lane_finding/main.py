@@ -1,3 +1,4 @@
+from __future__ import print_function
 import cv2
 import os
 import matplotlib.pyplot as plt
@@ -139,7 +140,7 @@ if __name__ == '__main__':
 
         selector = 'project'
         clip = VideoFileClip('{}_video.mp4'.format(selector)).fl_image(process_pipeline)
-        clip.write_videofile('out_{}_{}.mp4'.format(selector, time_window), audio=False)
+        clip.write_videofile('out_{}_timewindow_{}.mp4'.format(selector, time_window), audio=False)
 
     else:
 

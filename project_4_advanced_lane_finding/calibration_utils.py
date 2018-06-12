@@ -1,3 +1,4 @@
+from __future__ import print_function
 import cv2
 import numpy as np
 import glob
@@ -21,7 +22,7 @@ def lazy_calibration(func):
             print('Computing camera calibration...', end=' ')
             calibration = func(*args, **kwargs)
             with open(calibration_cache, 'wb') as dump_file:
-                pickle.dump(calibration, dump_file)
+                pickle.dump(calibration, dump_file, protocol = 2)
         print('Done.')
         return calibration
 

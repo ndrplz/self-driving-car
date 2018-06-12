@@ -35,11 +35,11 @@ def birdeye(img, verbose=False):
         axarray[0].set_title('Before perspective transform')
         axarray[0].imshow(img, cmap='gray')
         for point in src:
-            axarray[0].plot(*point, '.')
+            axarray[0].plot(point[0], point[1],'.')
         axarray[1].set_title('After perspective transform')
         axarray[1].imshow(warped, cmap='gray')
         for point in dst:
-            axarray[1].plot(*point, '.')
+            axarray[1].plot(point[0], point[1],'.')
         for axis in axarray:
             axis.set_axis_off()
         plt.show()
