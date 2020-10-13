@@ -1,15 +1,20 @@
-from functions_detection import *
-from functions_feat_extraction import extract_features_from_file_list
-import numpy as np
-import time
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.svm import LinearSVC
-import matplotlib.pyplot as plt
-from computer_vision_utils.filesystem import get_file_list_recursively
-from config import root_data_non_vehicle, root_data_vehicle, feat_extraction_params
 import os
 import pickle
+import time
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import LinearSVC
+
+from config import root_data_non_vehicle, root_data_vehicle, feat_extraction_params
+from functions_detection import draw_boxes
+from functions_detection import search_windows
+from functions_detection import slide_window
+from functions_feat_extraction import extract_features_from_file_list
+from project_5_utils import get_file_list_recursively
 
 
 if __name__ == '__main__':
