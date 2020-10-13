@@ -1,8 +1,9 @@
-import numpy as np
 import cv2
-from computer_vision_utils.stitching import stitch_together
-from functions_feat_extraction import image_to_features
 import matplotlib.pyplot as plt
+import numpy as np
+
+from functions_feat_extraction import image_to_features
+from project_5_utils import stitch_together
 
 
 def draw_labeled_bounding_boxes(img, labeled_frame, num_objects):
@@ -10,8 +11,7 @@ def draw_labeled_bounding_boxes(img, labeled_frame, num_objects):
     Starting from labeled regions, draw enclosing rectangles in the original color frame.
     """
     # Iterate through all detected cars
-    for car_number in range(1, num_objects+1):
-
+    for car_number in range(1, num_objects + 1):
         # Find pixels with each car_number label value
         rows, cols = np.where(labeled_frame == car_number)
 
@@ -41,7 +41,8 @@ def compute_heatmap_from_detections(frame, hot_windows, threshold=5, verbose=Fal
     # apply threshold + morphological closure to remove noise
     _, heatmap_thresh = cv2.threshold(heatmap, threshold, 255, type=cv2.THRESH_BINARY)
     heatmap_thresh = cv2.morphologyEx(heatmap_thresh, op=cv2.MORPH_CLOSE,
-                                      kernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (13, 13)), iterations=1)
+                                      kernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE,
+                                                                       (13, 13)), iterations=1)
     if verbose:
         f, ax = plt.subplots(1, 3)
         ax[0].imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
@@ -60,16 +61,18 @@ def compute_windows_multiscale(image, verbose=False):
 
     windows_multiscale = []
 
-    windows_32 = slide_window(image, x_start_stop=[None, None], y_start_stop=[4 * h//8, 5 * h//8],
-                                   xy_window=(32, 32), xy_overlap=(0.8, 0.8))
+    windows_32 = slide_window(image, x_start_stop=[None, None],
+                              y_start_stop=[4 * h // 8, 5 * h // 8],
+                              xy_window=(32, 32), xy_overlap=(0.8, 0.8))
     windows_multiscale.append(windows_32)
 
-    windows_64 = slide_window(image, x_start_stop=[None, None], y_start_stop=[4 * h//8, 6 * h//8],
-                                   xy_window=(64, 64), xy_overlap=(0.8, 0.8))
+    windows_64 = slide_window(image, x_start_stop=[None, None],
+                              y_start_stop=[4 * h // 8, 6 * h // 8],
+                              xy_window=(64, 64), xy_overlap=(0.8, 0.8))
     windows_multiscale.append(windows_64)
 
-    windows_128 = slide_window(image, x_start_stop=[None, None], y_start_stop=[3 * h//8, h],
-                                   xy_window=(128, 128), xy_overlap=(0.8, 0.8))
+    windows_128 = slide_window(image, x_start_stop=[None, None], y_start_stop=[3 * h // 8, h],
+                               xy_window=(128, 128), xy_overlap=(0.8, 0.8))
     windows_multiscale.append(windows_128)
 
     if verbose:
@@ -77,7 +80,8 @@ def compute_windows_multiscale(image, verbose=False):
         windows_img_64 = draw_boxes(image, windows_64, color=(0, 255, 0), thick=1)
         windows_img_128 = draw_boxes(image, windows_128, color=(255, 0, 0), thick=1)
 
-        stitching = stitch_together([windows_img_32, windows_img_64, windows_img_128], (1, 3), resize_dim=(1300, 500))
+        stitching = stitch_together([windows_img_32, windows_img_64, windows_img_128], (1, 3),
+                                    resize_dim=(1300, 500))
         cv2.imshow('', stitching)
         cv2.waitKey()
 
@@ -155,13 +159,13 @@ def draw_boxes(img, bbox_list, color=(0, 0, 255), thick=6):
 
 # Define a function you will pass an image and the list of windows to be searched (output of slide_windows())
 def search_windows(img, windows, clf, scaler, feat_extraction_params):
-
     hot_windows = []  # list to receive positive detection windows
 
     for window in windows:
         # Extract the current window from original image
         resize_h, resize_w = feat_extraction_params['resize_h'], feat_extraction_params['resize_w']
-        test_img = cv2.resize(img[window[0][1]:window[1][1], window[0][0]:window[1][0]], (resize_w, resize_h))
+        test_img = cv2.resize(img[window[0][1]:window[1][1], window[0][0]:window[1][0]],
+                              (resize_w, resize_h))
 
         # Extract features for that window using single_img_features()
         features = image_to_features(test_img, feat_extraction_params)
@@ -178,8 +182,3 @@ def search_windows(img, windows, clf, scaler, feat_extraction_params):
 
     # Return windows for positive detections
     return hot_windows
-
-
-if __name__ == '__main__':
-
-    pass

@@ -1,6 +1,13 @@
 """Keras implementation of SSD."""
 
+import cv2
 import keras.backend as K
+import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+from keras.applications.imagenet_utils import preprocess_input
+from keras.engine.topology import InputSpec
+from keras.engine.topology import Layer
 from keras.layers import Activation
 from keras.layers import AtrousConvolution2D
 from keras.layers import Convolution2D
@@ -9,23 +16,14 @@ from keras.layers import Flatten
 from keras.layers import GlobalAveragePooling2D
 from keras.layers import Input
 from keras.layers import MaxPooling2D
-from keras.layers import merge
 from keras.layers import Reshape
 from keras.layers import ZeroPadding2D
+from keras.layers import merge
 from keras.models import Model
-from keras.engine.topology import InputSpec
-from keras.engine.topology import Layer
-import numpy as np
-import tensorflow as tf
 from keras.preprocessing import image
 from keras.utils.data_utils import get_file
-import cv2
-import matplotlib.pyplot as plt
-import os
-from keras.applications.imagenet_utils import preprocess_input
-from keras.preprocessing import image
-from computer_vision_utils.bbox_helper import Rectangle
 
+from project_5_utils import Rectangle
 
 WEIGHTS_URL = 'http://imagelab.ing.unimore.it/files/model_weights/SSD/weights_SSD300.hdf5'
 
@@ -33,6 +31,7 @@ voc_classes = ['Aeroplane', 'Bicycle', 'Bird', 'Boat', 'Bottle',
                'Bus', 'Car', 'Cat', 'Chair', 'Cow', 'Diningtable',
                'Dog', 'Horse', 'Motorbike', 'Person', 'Pottedplant',
                'Sheep', 'Sofa', 'Train', 'Tvmonitor']
+
 
 class BBoxUtility(object):
     """Utility class to do some stuff with bounding boxes and priors.
