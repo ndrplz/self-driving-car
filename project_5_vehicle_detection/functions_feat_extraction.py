@@ -20,7 +20,7 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block, verbose=False, f
                        pixels_per_cell=(pix_per_cell, pix_per_cell),
                        cells_per_block=(cell_per_block, cell_per_block),
                        transform_sqrt=True,
-                       visualise=verbose, feature_vector=feature_vec)
+                       visualize=verbose, feature_vector=feature_vec)
         return features
 
 
