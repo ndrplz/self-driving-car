@@ -108,12 +108,12 @@ def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
     y_span = y_start_stop[1] - y_start_stop[0]
 
     # Compute the number of pixels per step in x/y
-    n_x_pix_per_step = np.int(xy_window[0] * (1 - xy_overlap[0]))
-    n_y_pix_per_step = np.int(xy_window[1] * (1 - xy_overlap[1]))
+    n_x_pix_per_step = int(xy_window[0] * (1 - xy_overlap[0]))
+    n_y_pix_per_step = int(xy_window[1] * (1 - xy_overlap[1]))
 
     # Compute the number of windows in x / y
-    n_x_windows = np.int(x_span / n_x_pix_per_step) - 1
-    n_y_windows = np.int(y_span / n_y_pix_per_step) - 1
+    n_x_windows = int(x_span / n_x_pix_per_step) - 1
+    n_y_windows = int(y_span / n_y_pix_per_step) - 1
 
     # Initialize a list to append window positions to
     window_list = []
